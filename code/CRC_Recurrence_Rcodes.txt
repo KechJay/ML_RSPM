@@ -1,0 +1,696 @@
+#==============import data
+getwd()
+setwd("C:/Users/~")
+MRC <- read.csv("Recur.csv", sep =";")#read this data
+#=====================================encode all vectors as factors
+MRC$hpt <-as.factor(MRC$hpt)
+MRC$gender<-as.factor(MRC$gender)
+MRC$citizenship <-as.factor(MRC$citizenship)
+MRC$ca_complications___1 <-as.factor(MRC$ca_complications___1)
+MRC$referral  <-as.factor(MRC$referral )
+MRC$dm<-as.factor(MRC$dm)
+MRC$prev_gi_dx___8 <-as.factor(MRC$prev_gi_dx___8)
+MRC$non_ca_rx___5 <-as.factor(MRC$non_ca_rx___5)
+MRC$fam_hist_ca2 <- as.factor(MRC$fam_hist_ca2)
+MRC$employment <- as.factor(MRC$employment)
+MRC$education2 <- as.factor(MRC$education2)
+MRC$non_ca_rx___3 <-as.factor(MRC$non_ca_rx___3)
+MRC$non_ca_rx___1 <-as.factor(MRC$non_ca_rx___1)
+MRC$medical_rx___2 <-as.factor(MRC$medical_rx___2)
+MRC$alt_therapy_practitioner___4 <-as.factor(MRC$alt_therapy_practitioner___4)
+MRC$alt_therapy_practitioner___3 <-as.factor(MRC$alt_therapy_practitioner___3)
+MRC$pt_prev_ca <-as.factor(MRC$pt_prev_ca) 
+MRC$malig_location___1 <-as.factor(MRC$malig_location___1) 
+MRC$malig_location___2 <-as.factor(MRC$malig_location___2) 
+MRC$malig_location___3 <-as.factor(MRC$malig_location___3) 
+MRC$meat <-as.factor(MRC$meat) 
+MRC$milk___0 <-as.factor(MRC$milk___0)
+MRC$fats___3 <-as.factor(MRC$fats___3)
+MRC$fats___6 <-as.factor(MRC$fats___6)
+MRC$fats___7 <-as.factor(MRC$fats___7)
+MRC$fats___8 <-as.factor(MRC$fats___8)
+MRC$fats___10 <-as.factor(MRC$fats___10)
+MRC$fats___0 <-as.factor(MRC$fats___0)
+MRC$asa_grading2 <-as.factor(MRC$asa_grading2)
+MRC$ecog_status2 <-as.factor(MRC$ecog_status2)
+MRC$hiv_enrollment <-as.factor(MRC$hiv_enrollment)
+MRC$prior_c_scope2 <-as.factor(MRC$prior_c_scope2)
+MRC$colonoscopy_at_visit2  <-as.factor(MRC$colonoscopy_at_visit2 )
+MRC$radiologic_stage2 <-as.factor(MRC$radiologic_stage2)
+MRC$histo_ca_pre_rx <-as.factor(MRC$histo_ca_pre_rx)
+MRC$milk___1<-as.factor(MRC$milk___1)
+MRC$procedure_name___7 <-as.factor(MRC$procedure_name___7)
+MRC$medical_rx___13 <-as.factor(MRC$medical_rx___13)
+MRC$medical_rx___7 <-as.factor(MRC$medical_rx___7)
+MRC$pt_prev_ca <-as.factor(MRC$pt_prev_ca)
+MRC$prev_ca_rx___1 <-as.factor(MRC$prev_ca_rx___1)
+MRC$rx_mdt1___1 <-as.factor(MRC$rx_mdt1___1)
+MRC$fats___1 <-as.factor(MRC$fats___1)
+MRC$pre_therap_surg_comps <-as.factor(MRC$pre_therap_surg_comps)
+MRC$rx_mdt1___5 <-as.factor(MRC$rx_mdt1___5)
+MRC$histology___1 <-as.factor(MRC$histology___1)
+MRC$rad_sensitize_agent___1 <-as.factor(MRC$rad_sensitize_agent___1)
+MRC$relationship_staus2 <-as.factor(MRC$relationship_staus2)
+MRC$pt_prev_ca <-as.factor(MRC$pt_prev_ca)
+MRC$prior_c_scope2 <-as.factor(MRC$prior_c_scope2)
+MRC$prev_ca_rx___1 <-as.factor(MRC$prev_ca_rx___1)
+MRC$procedure1to17 <-as.factor(MRC$procedure1to17)
+MRC$rx_mdt1___1 <-as.factor(MRC$rx_mdt1___1)
+MRC$radiologic_stage2 <-as.factor(MRC$radiologic_stage2)
+MRC$chemo_drug <-as.factor(MRC$chemo_drug)
+MRC$language2 <-as.factor(MRC$language2)
+MRC$rx_mdt1to4 <-as.factor(MRC$rx_mdt1to4)
+MRC$colonoscopy_at_visit1 <-as.factor(MRC$colonoscopy_at_visit1)
+table(MRC$status2)
+
+#==============================More on feature engineering
+
+MRC$race2 <- ifelse(MRC$race2 == "Black", "Black",
+                    ifelse(MRC$race2 =="White", "White","Others"))
+
+MRC$race2 <-as.factor(MRC$race2)
+table(MRC$race2)
+#radiological
+table(MRC$radiologic_stage2)
+MRC$radiologic_stage2 <- ifelse(MRC$radiologic_stage2 == "0", "0",
+                                ifelse(MRC$radiologic_stage2 == "1", "12",
+                                       ifelse(MRC$radiologic_stage2 == "2", "12",
+                                              ifelse(MRC$radiologic_stage2 =="3", "3","4"))))
+
+MRC$radiologic_stage2 <-as.factor(MRC$radiologic_stage2)
+MRC$radiologic_stage2 <-relevel(MRC$radiologic_stage2, ref="12")
+MRC$race2 <-relevel(MRC$race2, ref="White")
+
+
+MRC$procedure1to17 <-relevel(MRC$procedure1to17, ref="0")
+MRC$procedure1to17 <-as.factor(MRC$procedure1to17)
+table(MRC$procedure1to17)
+
+
+table(MRC$hospital2)
+
+#hospital
+MRC$hospital2 <- ifelse(MRC$hospital2 == "1", "1",
+                        ifelse(MRC$hospital2 =="2", "2","3"))
+
+MRC$hospital2 <-as.factor(MRC$hospital2)
+#language
+table(MRC$language2)
+#hospital
+MRC$language2 <- ifelse(MRC$language2 == "English", "English",
+                        ifelse(MRC$language2 =="Ind_Alang", "Ind_Alang","Others"))
+
+#death
+table(MRC$status2)
+
+MRC$language2 <-as.factor(MRC$language2)
+
+MRC$status2 <- relevel(MRC$status2, ref = "nonrecur")
+
+MRC$status2 <-as.factor(MRC$status2)
+table(MRC$radiologic_stage2)
+MRC$radiologic_stage2 <- relevel(MRC$radiologic_stage2, ref = "12")
+table(MRC$status2)
+str(MRC)
+mean(MRC$blds_hb2)
+
+#write.csv(MRC, file="Recur2.csv")
+#=================================================================logistic regression
+confusion_matrices <- list()
+accuracy <- c()
+for (i in c(1:10)) {
+  # creating 10 random folds from the cancer data set
+  set.seed(3456)
+  folds <- caret::createFolds(MRC$status2, k = 10)
+  
+  # splitting the data into training and testing
+  test <- MRC[MRC$record_id %in% folds[[i]], ]
+  train <- MRC[MRC$record_id %in% unlist(folds[-i]), ]
+  
+  library(FSelector)
+  
+  #select features based on info gain and OneR
+  #Take cut off at 10 features
+  IG.feat <- information.gain(status2 ~., data =train[,-1],)
+  subIG <- cutoff.k(IG.feat, 10)
+  
+  OR <- oneR(status2~., train[,-1])
+  print(OR)
+  subOR <- cutoff.k(OR, 10)
+  # find the best common features among them
+  best <- Reduce(intersect, list(subIG,subOR))
+  
+  #combined the best and the response variable
+  bestFeat_combined <- c(best, "status2")
+  print(bestFeat_combined)
+  
+  # building a logistic regression model based on the best features
+  # with the highest correlation from the previous step
+  logis_surv <- glm(as.factor(status2) ~ ., family = binomial, data = train[, bestFeat_combined])
+  summary(logis_surv)
+   # making predictions
+  Logpredictions <- predict(logis_surv, newdata = test[, bestFeat_combined], type = "response")
+  
+  # rounding predictions
+  Logpred_rounded <- as.factor(Logpredictions > 0.5)
+  
+  
+  # Evaluating model accuracy
+  predictions_dflg <- data.frame(cbind(test$status2, Logpred_rounded))
+  predictions_list <- lapply(predictions_dflg, as.factor)
+ confusion_matrices[[i]] <- caret::confusionMatrix(predictions_list[[2]], predictions_list[[1]])
+  accuracy[[i]] <- confusion_matrices[[i]]$overall["Accuracy"]
+}
+library(pander)
+library(dplyr)
+library(pROC)
+names(accuracy) <- c("Fold 1", "Fold 2", "Fold 3", "Fold 4", "Fold 5","Fold 6","Fold 7","Fold 8","Fold 9","Fold 10")
+accuracy %>%
+pander::pandoc.table()
+mean(accuracy)
+
+
+#===================================Naive bayes
+library(e1071) 
+
+confusion_matrices <- list()
+accuracy <- c()
+for (i in c(1:10)) {
+  # creating 10 random folds from the cancer data set
+  set.seed(3456)
+  folds <- caret::createFolds(MRC$status2, k = 10)
+  
+  # splitting the data into training and testing
+  test <- MRC[MRC$record_id %in% folds[[i]], ]
+  train <- MRC[MRC$record_id %in% unlist(folds[-i]), ]
+  
+  library(FSelector)
+  
+  #select features based on info gain and OneR
+  #Take cut off at 10 features
+  IG.feat <- information.gain(status2 ~., data =train[,-1],)
+  subIG <- cutoff.k(IG.feat, 10)
+  
+  OR <- oneR(status2~., train[,-1])
+  print(OR)
+  subOR <- cutoff.k(OR, 10)
+  # find the best common features among them
+  best <- Reduce(intersect, list(subIG,subOR))
+  
+  #combined the best and the response variable
+  bestFeat_combined <- c(best, "status2")
+  print(bestFeat_combined)
+  
+  
+  # building a naive bayse model based on the best features
+  # from the previous step
+  #tuneGrid = tuneGridNaive
+  library(e1071)
+  naiveSurv<- naiveBayes(as.factor(status2) ~ .,  data = train[, bestFeat_combined],
+                         laplace = 4,threshold = 0.01, eps =0)
+
+  # making predictions
+  predictions2 <- predict(naiveSurv, newdata = test[, bestFeat_combined], type = "class")
+  
+  # rounding predictions
+  predictions_rounded <- as.numeric(predictions2)
+  
+  # Evaluating model accuracy
+  predictions_df <- data.frame(cbind(test$status2, predictions_rounded))
+  predictions_list <- lapply(predictions_df, as.factor)
+  confusion_matrices[[i]] <- caret::confusionMatrix(predictions_list[[2]], predictions_list[[1]])
+  accuracy[[i]] <- confusion_matrices[[i]]$overall["Accuracy"]
+}
+
+names(accuracy) <- c("Fold 1", "Fold 2", "Fold 3", "Fold 4", "Fold 5","Fold 6","Fold 7","Fold 8","Fold 9","Fold 10")
+accuracy%>%
+pander::pandoc.table()
+mean(accuracy)
+
+
+#===================================C5.0
+confusion_matrices <- list()
+accuracy <- c()
+for (i in c(1:10)) {
+  # creating 10 random folds from the cancer data set
+  set.seed(3456)
+  folds <- caret::createFolds(MRC$status2, k = 10)
+  
+  # splitting the data into training and testing
+  test <- MRC[MRC$record_id %in% folds[[i]], ]
+  train <- MRC[MRC$record_id %in% unlist(folds[-i]), ]
+  
+  library(FSelector)
+  
+  #select features based on info gain and OneR
+  #Take cut off at 10 features
+  IG.feat <- information.gain(status2 ~., data =train[,-1],)
+  subIG <- cutoff.k(IG.feat, 10)
+  
+  OR <- oneR(status2~., train[,-1])
+  print(OR)
+  subOR <- cutoff.k(OR, 10)
+  # find the best common features among them
+  best <- Reduce(intersect, list(subIG,subOR))
+  
+  #combined the best and the response variable
+  bestFeat_combined <- c(best, "status2")
+  print(bestFeat_combined)
+  
+  
+  # building a naive bayse model based on the best features
+  # from the previous step
+  #tuneGrid = tuneGridNaive
+  library(C50)
+  
+  C50Surv<- C5.0(as.factor(status2) ~ .,  data = train[, bestFeat_combined],
+                 control = C5.0Control(winnow = FALSE), bands =15
+                 
+  )
+  # making predictions
+  predictions3 <- predict(C50Surv, newdata = test[, bestFeat_combined], type="prob")
+  
+  # rounding predictions
+  predictions_rounded <- as.numeric(predictions3)
+  
+  # Evaluating model accuracy
+  #predictions_df <- data.frame(cbind(test$status2, predictions_rounded))
+ #predictions_list <- lapply(predictions_df, as.factor)
+ # confusion_matrices[[i]] <- caret::confusionMatrix(predictions_list[[2]], predictions_list[[1]])
+  #accuracy[[i]] <- confusion_matrices[[i]]$overall["Accuracy"]
+}
+
+names(accuracy) <- c("Fold 1", "Fold 2", "Fold 3", "Fold 4", "Fold 5","Fold 6","Fold 7","Fold 8","Fold 9","Fold 10")
+accuracy%>%
+  pander::pandoc.table()
+mean(accuracy)
+
+
+#===================================Random Forest
+
+#put the  features in continuous format
+confusion_matrices <- list()
+accuracy <- c()
+for (i in c(1:10)) {
+  # creating 10 random folds from the cancer data set
+  set.seed(3456)
+  folds <- caret::createFolds(MRC$status2, k = 10)
+  
+  # splitting the data into training and testing
+  test <- MRC[MRC$record_id %in% folds[[i]], ]
+  train <- MRC[MRC$record_id %in% unlist(folds[-i]), ]
+  
+  library(FSelector)
+  
+  #select features based on info gain and OneR
+  #Take cut off at 10 features
+  IG.feat <- information.gain(status2 ~., data =train[,-1])
+  subIG <- cutoff.k(IG.feat, 10)
+  
+  OR <- oneR(status2~., train[,-1])
+  print(OR)
+  subOR <- cutoff.k(OR, 10)
+  # find the best common features among them
+  best <- Reduce(intersect, list(subIG,subOR))
+  
+  #combined the best and the response variable
+  bestFeat_combined <- c(best, "status2")
+  print(bestFeat_combined)
+  
+  
+  # building aRandom forest model based on the best features
+  # from the previous step
+  #x<-train[, bestFeat_combined]
+  #tuneRF(x[, 1:7],x$status2, stepFactor = 1.5, improve = 1e-5, ntreeTry = 500)
+  
+  
+  library(randomForest)
+  RFsurv<- randomForest(as.factor(status2) ~ .,  data = train[, bestFeat_combined],
+                        ntree=400, mtry=3, importance = TRUE , do.trace = 10)
+  # making predictions
+  predictions4 <- predict(RFsurv, newdata = test[, bestFeat_combined],type="prob",probability=TRUE)
+    
+  # rounding predictions
+  predictions_rounded <- as.factor(predictions4>=0.5)
+ 
+  # Evaluating model accuracy
+  predictions_df <- data.frame(cbind(test$status2, predictions_rounded))
+ predictions_list <- lapply(predictions_df, as.factor)
+confusion_matrices[[i]] <- caret::confusionMatrix(predictions_list[[2]], predictions_list[[1]])
+accuracy[[i]] <- confusion_matrices[[i]]$overall["Accuracy"]
+}
+
+names(accuracy) <- c("Fold 1", "Fold 2", "Fold 3", "Fold 4", "Fold 5","Fold 6","Fold 7","Fold 8","Fold 9","Fold 10")
+accuracy%>%
+pander::pandoc.table()
+mean(accuracy)
+
+#========================================SVM
+library(e1071)
+#SVMgrid <- expand.grid(C = c(1.5,1.596,1.65,1.89,1.95,2))
+confusion_matrices <- list()
+accuracy <- c()
+for (i in c(1:10)) {
+  # creating 10 random folds from the cancer data set
+  set.seed(3456)
+  folds <- caret::createFolds(MRC$status2, k = 10)
+  
+  # splitting the data into training and testing
+  test <- MRC[MRC$record_id %in% folds[[i]], ]
+  train <- MRC[MRC$record_id %in% unlist(folds[-i]), ]
+  
+  #select features based on info gain and OneR
+  #Take cut off at 10 features
+  IG.feat <- information.gain(status2 ~., data =train[,-1],)
+  subIG <- cutoff.k(IG.feat, 10)
+  
+  OR <- oneR(status2~., train[,-1])
+  print(OR)
+  subOR <- cutoff.k(OR, 10)
+  # find the best common features among them
+  #best <- Reduce(intersect, list(subIG,subOR))
+  best <- Reduce(intersect, list(subIG,subOR))
+  #combined the best and the response variable
+  bestFeat_combined <- c(best, "status2")
+  print(bestFeat_combined)
+  
+  
+  # building an SVM regression model based on the 2 predictors
+  
+  
+  #set.seed(3456) 
+  #range <- list(sigma = c(0.05,0.0456,0.0577), C = c(1.5,1.596,1.65,1.89,1.95,2,2.2,2.44), degree=c(0.5,1,1.5,2,3,4, 5))
+  # ranges=range
+  #svmsURV<- tune(svm,as.factor(status2) ~ .,  data = train[, bestFeat_combined],
+  #ranges=range,   verbose=FALSE, kernel ="radial")
+  
+  #svmsURV<- svm(as.factor(status2) ~ .,  data = train[, df_highest_correlation],
+  #gamma =0.05,cost =1.5, kernel ="radial",scale = FALSE
+  #)
+  
+  svmsURV<- svm(as.factor(status2) ~ .,  data = train[, bestFeat_combined],
+                C =1.5,gamma =0.05, kernel ="radial",scale = FALSE,probability=TRUE
+  )
+  
+  # making predictions
+  predictions5 <- predict(svmsURV, newdata = test[, bestFeat_combined])
+                  
+  # rounding predictifolds
+  predictions_rounded <- as.factor(predictions5)
+  
+  # Evaluating model accuracy
+  predictions_df <- data.frame(cbind(test$status2, predictions_rounded))
+  predictions_list <- lapply(predictions_df, as.factor)
+  confusion_matrices[[i]] <- caret::confusionMatrix(predictions_list[[2]], predictions_list[[1]])
+  accuracy[[i]] <- confusion_matrices[[i]]$overall["Accuracy"]
+  
+  
+}
+library(pander)
+names(accuracy) <- c("Fold 1", "Fold 2", "Fold 3", "Fold 4", "Fold 5","Fold 6","Fold 7","Fold 8","Fold 9","Fold 10")
+accuracy %>%
+  pander::pandoc.table()
+mean(accuracy)
+
+#===============================Forest plot for logistic reg
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
+library(ggplot2)
+
+
+theme_set(theme_sjplot())
+plot_model(logis_surv,show.values = TRUE, value.offset = .5,vline.color = "blue")
+
+#=======================================================================Using caret
+#use only the features that were selected
+
+X <-MRC[1:697,c("radiologic_stage2", "chemo_drug","rx_mdt1___1", "hospital2","procedure1to17",
+                   "prev_ca_rx___1","prior_c_scope2","age_at_first_vst","pt_prev_ca","status2")]
+
+
+
+library(caret)
+library(doSNOW)
+library(MLmetrics)
+library(DMwR)
+library(klaR)
+
+
+
+y1 <-X[[10]] 
+x1<-X[,1:9]
+
+ my_trctrl <-trainControl(method = "repeatedcv",
+                         number = 10,
+                         ## Estimate class probabilities
+                         classProbs = TRUE,
+                         savePredictions = T,
+                         ## Evaluate performance using 
+                         ## the following function
+                         search = "grid",
+                         summaryFunction = prSummary)
+
+set.seed(3456)
+my_trctrl2 <-trainControl(method = "repeatedcv",
+                          number = 10,
+                          ## Estimate class probabilities
+                          classProbs = TRUE,
+                          savePredictions = T,
+                          ## Evaluate performance using 
+                          ## the following function
+                          summaryFunction = twoClassSummary)
+
+#======================================Naive bayes
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+
+set.seed(3456)
+
+# set up tuning grid using different ways, choose option with best parameter tune
+#NBsearch_grid <- expand.grid(.fL=c(0), .usekernel=c(FALSE))
+NBsearch_grid <- expand.grid(
+  usekernel = FALSE, #c(TRUE, FALSE)#,
+  fL = c(0,0.5,1.0),   #0:5,
+  adjust = c(0,0.5,1.0) #seq(0, 5, by = 1)
+)
+#usekernel=FALSE,fL=0,adjust=FALSE
+
+
+set.seed(3456)
+nb <-train( y = y1, x = x1,
+            method = "nb",
+            trControl = my_trctrl,
+            #preProcess = c("center", "scale"),
+            verbose = FALSE,
+            tuneGrid=data.frame(usekernel=FALSE,fL=c(0,0.5,1.0),adjust=c(0,0.5,1.0)),
+            ## Specify which metric to optimize
+            metric = "AUC"
+           
+)
+
+#shutdown cluster
+stopCluster(cl)
+#Check out results  
+print(nb)
+confusionMatrix(nb)
+
+
+
+mean = mean(nb$resample$AUC)
+sd(nb$resample$AUC)
+se =(sd(nb$resample$AUC)/sqrt(10))
+lci <-mean-(2*se)
+Uci <-mean+(2*se)
+
+varImp(nb)
+
+
+#==#======================================C5.0
+library(C50)
+library(plyr)
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+
+C5.0grid <- expand.grid( .winnow = c(TRUE,FALSE), .trials=c(2,4,6,8,10,20,40,50,60,70,80), .model="tree" )
+
+
+set.seed(3456)
+C5.01 <-train( y = y1, x = x1,
+              method = "C5.0",
+              trControl = my_trctrl,
+              #preProcess = c("center", "scale"),
+              verbose = FALSE,
+              tuneGrid=C5.0grid,
+              ## Specify which metric to optimize
+              metric = "AUC"
+)
+
+
+#shutdown cluster
+stopCluster(cl)
+#Check out results 
+confusionMatrix(C5.01)
+(C5.01$resample$AUC)            
+
+mean = mean(C5.01$resample$AUC)
+sd(C5.01$resample$AUC)
+se =(sd(C5.01$resample$AUC)/sqrt(10))
+lci <-mean-(2*se)
+Uci <-mean+(2*se)
+
+varImp(C5.01)
+
+
+#=========================================Random forest
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+
+
+grid <- expand.grid(
+  n.trees = seq(300, 1000, by = 100)
+  , interaction.depth = c(1, 4, 6)
+  , shrinkage = c(0.01, 0.1)
+ , n.minobsinnode = c(5, 10, 20, 30)        
+)
+newGrid = expand.grid(mtry = c(2,3,4)) 
+
+set.seed(3456)
+rf.model <-train(y = y1, x = x1,
+                  method = "rf",
+                  trControl = my_trctrl,
+                  #preProcess = c("center", "scale"),
+                  verbose = FALSE,
+                 #tunegrid <- expand.grid(mtry=c(1:4), ntree=c(300,400, 500,600,800,1000)),
+                 tunegrid=grid,
+             
+                  ## Specify which metric to optimize
+                  metric = "AUC")
+
+
+
+
+
+#shutdown cluster
+stopCluster(cl)
+#Check out results
+
+
+#Check out results
+#predict(rf.model$finalModel, data=x1, interval = "confidence")
+print(rf.model$finalModel)
+rf.model$bestTune
+plot(rf.model$finalModel)
+plot(rf.model$results)
+confusionMatrix(rf.model)
+rrfImp <- varImp(rf.model, scale=F)
+plot(rrfImp)
+
+mean = mean(rf.model$resample$AUC)
+sd(rf.model$resample$AUC)
+se =(sd(rf.model$resample$AUC)/sqrt(10))
+lci <-mean-(2*se)
+Uci <-mean+(2*se)
+
+#=============================================SVM====
+
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+
+set.seed(3456)
+SVMgrid <- expand.grid(C = c(1, 1.5,1.596,1.65,1.89,1.95,2))
+#SVMgrid<-expand.grid(C=2)
+#tuneLength = 10
+svmL <- train(as.factor(status2)~., data=X, 
+              method="svmLinear",
+              trControl=my_trctrl,
+                      tuneGrid = SVMgrid,
+              #preProc = c("scale","YeoJohnson"),
+              verbose=FALSE, metric ="AUC")
+
+
+
+#shutdown cluster
+stopCluster(cl)
+confusionMatrix(svmL)
+  
+mean = mean(svmL$resample$AUC)
+sd(svmL$resample$AUC)
+se =(sd(svmL$resample$AUC)/sqrt(10))
+lci <-mean-(2*se)
+Uci <-mean+(2*se)
+
+plot(varImp(svmL))
+
+#=========================================================================Neural network
+library(neuralnet)
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+set.seed(3456)
+
+
+
+ANN <- train(status2~., data=X, method = 'nnet',
+             #preProcess = c('center', 'scale'), 
+             trControl = my_trctrl,importance=T,
+             metric="AUC",
+             tuneGrid=expand.grid(size=c(2,4,6,8,10), decay=c(0.1,1,0.5)))
+
+
+print(ANN)
+confusionMatrix(ANN)
+
+
+stopCluster(cl)
+
+mean = mean(ANN$resample$AUC)
+sd(ANN$resample$AUC)
+se =(sd(ANN$resample$AUC)/sqrt(10))
+lci <-mean-(2*se)
+Uci <-mean+(2*se)
+varImp(ANN, scale=FALSE)
+names(coef(ANN$finalModel))
+ANN$modelInfo$varImp
+plot(varImp(it2, scale = FALSE))
+data <-read.csv("ANN_pred.csv")
+plotnet(ANN)
+
+#=================================================================================Logistic regression
+library(caTools)
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+
+#expand.grid(parameter=c(0.001, 0.01, 0.1, 1,10,100, 1000))
+set.seed(3456)
+ logistic = train(
+  y = y1, x = x1,
+  
+  trControl = my_trctrl,
+  method = "glm",
+  family = "binomial",
+  tuneLength = 10,
+  metric = "AUC")
+
+#shutdown cluster
+stopCluster(cl)
+mean = mean(logistic$resample$AUC)
+sd(logistic$resample$AUC)
+se =(sd(logistic$resample$AUC)/sqrt(10))
+lci <-mean-(2*se)
+Uci <-mean+(2*se)
+
+summary(default_glm_mod)
+confusionMatrix(logistic)
+
+
+varImp(logistic)
+#Model comparison
+#wilcoxen test
+wilcox.test(rf.model$resample$AUC,nb$resample$AUC,alt="two.sided",paired=TRUE,exact=FALSE, correct=FALSE)
+#z stat
+z <- qnorm(p-value/2)
+z <- qnorm(0.2411/2)
+#effect size
+#z/sqr(N)
+z/sqrt(20)
+#0.3527/ sqrt((length(ANN$resample$AUC) + length(logistic$resample$AUC)))
