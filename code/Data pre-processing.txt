@@ -1,0 +1,1018 @@
+getwd()
+setwd
+rm(list=ls())
+MRC2 <- read.csv("C:~Comp_surv_data2.csv", sep=";",na.strings=c(""," ","NA"))
+
+
+#===============================remove duplicate records
+#duplicated(MRC2$record_id)
+#MRC2$record_id[duplicated(MRC2$record_id)]
+#MRC <- MRC2[!duplicated(MRC2$record_id), ] #HERE
+library(data.table)
+MRC <-as.data.table(MRC2)[, .SD[which.max(hospital)], by=record_id]#use this
+
+#list( tail(MRC))
+#library(dplyr)
+#MRC <-MRC%>%dplyr::select(record_id:language_group,date_last_seen, mnths_fu_post_dx, ltfu, death, mnths_fu_post_death, tx_at_death,
+#                          cod, everything())    
+
+##===============================Response variables
+#===survival
+table(MRC$death)
+MRC$death2 <-ifelse(is.na(MRC$death), "survived", "not_survived") #here
+table(MRC$death2, exclude = NULL)
+MRC$death2<- as.factor(MRC$death2)
+
+#====recurrence
+table(MRC$ca_recurrence, exclude =NULL)
+table(MRC$mets_spread, exclude = NULL)
+
+
+MRC$ca_recurrence2 <-ifelse(MRC$ca_recurrence=="1", "recur", "nonrecur")
+table(MRC$ca_recurrence2, exclude = NULL)
+MRC$ca_recurrence2[is.na(MRC$ca_recurrence2)] <- "nonrecur"
+
+#recode metastatic
+MRC$mets_spread2 <-ifelse(MRC$mets_spread=="1", "recur", "nonrecur")
+table(MRC$mets_spread2, exclude = NULL)
+MRC$mets_spread2[is.na(MRC$mets_spread2)] <- "nonrecur"
+
+#combine both
+MRC$status2 <-ifelse(MRC$ca_recurrence2== "recur" | MRC$mets_spread2=="recur", "recur","nonrecur")
+table(MRC$status2, exclude = NULL)
+
+
+#IS the patient lost to follow up
+table(MRC$ltfu, exclude = NULL)
+a <-MRC[which(MRC$ltfu ==1) ,]  #here
+write.csv(a, file="lostofollup.csv")
+interSurlost <- MRC[which(MRC$death2== "survived" & MRC$ltfu =="1"), ]
+interSurlost <- MRC[which(MRC$status2== "recur" & MRC$ltfu =="1"), ]
+union <- MRC[which(MRC$death2== "survived" | MRC$ltfu =="1"), ]
+
+#=remove cases lost to follow up
+table(MRC$ltfu, exclude = NULL)
+MRC2 <-subset(MRC, ltfu !=1| is.na(ltfu) )   #here
+MRC2 <-subset(MRC, MRC$ltfu !=1| is.na(ltfu) | MRC$status2 !="nonrecur" )   #here
+table(MRC2$death2) 
+table(MRC$status2) 
+MRC <-MRC2
+#==============================================================================================descriptive analysis
+#gender
+table(MRC$gender,  exclude = NULL)
+MRC$gender<- as.factor(MRC$gender)
+
+
+
+#race
+table(MRC$race,  exclude = NULL)
+
+MRC$race <-ifelse(MRC$race =="1", "Black",
+                   ifelse(MRC$race =="2", "White","others"))
+                          
+                               
+
+table(MRC$race2,  exclude = NULL)
+MRC$race<- as.factor(MRC$race)
+
+
+
+#hospital
+table(MRC$hospital,  exclude = NULL)
+
+
+
+MRC$hospital <-ifelse(MRC$hospital =="1", "1",
+                      ifelse(MRC$hospital=="2", "2",
+                             ifelse(MRC$hospital=="3", "3",   
+                                    ifelse(MRC$hospital=="4", "4", "4"))))
+                                          
+table(MRC$hospital,  exclude = NULL)
+MRC$hospital <-as.factor(MRC$hospital)
+
+
+#=language
+table(MRC$language_group,  exclude = NULL)
+MRC$language <-ifelse(MRC$language_group =="10", "English",
+                       ifelse(MRC$language_group=="11", "Afrikans",
+                              ifelse(MRC$language_group =="12", "other", "Ind_Alang")))
+table(MRC$language) 
+MRC$languag2 <-as.factor(MRC$language)
+
+
+
+#place of birth
+table(MRC$place_of_birth, exclude = NULL)
+MRC$place_of_birth <-as.factor(MRC$place_of_birth)
+
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+M
+#travel distance
+summary(MRC$travel_distance_linear)
+MRC$travel_distance_linear<-normalize(MRC$travel_distance_linear)
+
+#relationship status
+table(MRC$relationship_staus)
+#relationship status
+MRC$relationship_staus <-ifelse(MRC$relationship_staus =="1", "mar/co",
+                                 ifelse(MRC$relationship_staus=="2", "mar/co",
+                                        ifelse(MRC$relationship_staus=="3","div/sep",
+                                               ifelse(MRC$relationship_staus=="4","div/sep",
+                                                      ifelse(MRC$relationship_staus=="5","widowed", "single")))))
+
+table(MRC$relationship_staus)   
+MRC$relationship_staus <-as.factor(MRC$relationship_staus)
+
+
+
+#social status
+table(MRC$ses_land, exclude = NULL)
+table(MRC$ses_car, exclude = NULL)
+
+
+MRC$ses_land <-as.factor(MRC$ses_land)
+MRC$ses_car <-as.factor(MRC$ses_car)
+
+
+#MRC <- cbind(MRC,rowSums = rowSums(MRC[11:14]))
+                  #MRC$socio_scale <-ifelse(MRC$wealth <= "3", "lower ",
+                         #3ifelse(MRC$wealth == "4", "middle","upper"))
+
+
+
+#=employement
+table(MRC$employment, exclude = NULL)
+MRC$employment <- as.factor(MRC$employment)
+
+#education level
+table(MRC$education, exclude = NULL)
+MRC$education <-ifelse(MRC$education=="1", "no/primary",
+                                 ifelse(MRC$education=="2", "no/primary",
+                                        ifelse(MRC$education=="3","high school",
+                                               ifelse(MRC$education=="4","matric",
+                                                      ifelse(MRC$education=="5","tertiary education",NA)))))    
+                                                             
+table(MRC$education, exclude = NULL)
+MRC$education <- as.factor(MRC$education)
+
+
+#family history
+table(MRC$fam_hist_ca,exclude = NULL)
+MRC$fam_hist_ca <-ifelse(MRC$fam_hist_ca=="0", "0",
+                        ifelse(MRC$fam_hist_ca=="1", "1",NA))
+                              
+MRC$fam_hist_ca <- as.factor(MRC$fam_hist_ca)
+
+
+
+
+#non-cancerous therapy medical
+table(MRC$git_pre_length_of_time, exclude = NULL)
+
+
+
+#===================================medical
+
+#alternative therapy
+table(MRC$alt_therapy_practitioner___4, exclude =NULL)
+MRC$alt_therapy_practitioner___4 <-as.factor(MRC$alt_therapy_practitioner___4) 
+
+table(MRC$alt_therapy_practitioner___3, exclude =NULL)
+MRC$alt_therapy_practitioner___3 <-as.factor(MRC$alt_therapy_practitioner___3) 
+
+
+
+#previous
+table(MRC$pt_prev_ca, exclude =NULL)
+MRC$pt_prev_ca <-as.factor(MRC$pt_prev_ca) 
+
+
+#============examination and current crc information
+
+summary(MRC$bmi, exclude = NULL)
+#summary(MRC$waist_circum, exclude =NULL)
+
+
+#recoding malignant locations
+table(MRC$malig_location___1,exclude = NULL)
+table(MRC$malig_location___2,exclude = NULL)
+table(MRC$malig_location___3,exclude = NULL)
+
+
+MRC$malig_location___1 <-as.factor(MRC$malig_location___1) 
+MRC$malig_location___2 <-as.factor(MRC$malig_location___2) 
+MRC$malig_location___3 <-as.factor(MRC$malig_location___3) 
+
+#Refusal
+table(MRC$refusal_rx_option___0, exclude =NULL)
+MRC$refusal_rx_option___0 <-as.factor(MRC$refusal_rx_option___0) 
+ 
+
+
+
+
+#========Dietary history=================================================================
+
+#red meat
+table(MRC$red_met, exclude = NULL)
+MRC$red_met <- ifelse(MRC$red_met ==0, "0",
+                            ifelse(MRC$red_met ==1 , "1", 
+                                   ifelse(MRC$red_met ==2 , "2", 
+                                          ifelse(MRC$red_met ==3 , "3", 
+                                   ">3" )))) 
+                                   
+table(MRC$red_met)
+MRC$red_met <-as.factor(MRC$red_met) 
+
+
+#chicken fish
+summary(MRC$chicken_fish)
+
+#processed food
+summary(MRC$processed_foods)
+
+#beans lentils
+MRC$beans_lentils <-as.numeric(MRC$beans_lentils)
+summary(MRC$beans_lentils)
+
+
+#fruits
+summary(MRC$fruit)
+
+#vegetable
+summary(MRC$veges)
+
+#pap_rice
+summary(MRC$pap_rice)
+
+#fast_food
+summary(MRC$fast_food)
+
+#junk food
+summary(MRC$junk_foods)
+
+
+#milk, the categories are 104, 599, 10,3. we decided to use milk__0 alone and dropped others
+
+#Reduce(intersect, list(MRC$milk___0,MRC$milk___1,c))
+#table(MRC$milk___0, exclude =NULL)
+#MRC$milk___1[(MRC$milk___1 %in% MRC$milk___2)]
+# MRC[which(MRC$milk___1 == "1" & MRC$milk___2 =="1"), ]
+ #MRC[which(MRC$milk___1 == "1" & MRC$milk___0 =="1"), ]
+# MRC[which(MRC$milk___2 == "1" & MRC$milk___0 =="1"), ]
+ #table(MRC$milk___2, exclude = NULL)
+#MRC$milk <- ifelse(MRC$milk___0 ==1, "0",
+                   #ifelse(MRC$milk___1 ==1, "1",
+                          #ifelse(MRC$milk___2 ==1, "2","NA")))
+
+table(MRC$milk___0, exclude = NULL)
+MRC$milk___0 <-as.factor(MRC$milk___0)
+
+
+
+
+#============fats
+
+table(MRC$fats___6, exclude = NULL)
+table(MRC$fats___8, exclude = NULL)
+table(MRC$fats___7, exclude = NULL)
+
+MRC$fats___6 <-as.factor(MRC$fats___6)
+MRC$fats___7 <-as.factor(MRC$fats___7)
+MRC$fats___8 <-as.factor(MRC$fats___8)
+
+
+
+#============Anaesthetic grading and ECOG status======================================was not able to get much from here
+#anas_grading
+table(MRC$asa_grading, exclude = NULL)
+MRC$asa_grading <-as.factor(MRC$asa_grading)
+table(MRC$asa_grading)
+
+MRC$asa_grading <- ifelse(MRC$asa_grading == "0", "testnotd",
+                           ifelse(MRC$asa_grading =="1", "gradeI",
+                                  ifelse(MRC$asa_grading =="2", "gradeII",
+                                         ifelse(MRC$asa_grading =="3", "gradeIII",NA))))
+
+table(MRC$asa_grading, exclude = NULL)
+MRC$asa_grading <-as.factor(MRC$asa_grading)
+
+
+
+#eco_staus
+table(MRC$ecog_status, exclude = NULL)
+MRC$ecog_status <- ifelse(MRC$ecog_status == "6", "not done",
+                      ifelse(MRC$ecog_status =="0", "0",
+                             ifelse(MRC$ecog_status =="1", "1",
+                                    ifelse(MRC$ecog_status=="2" , "2",
+                                           ifelse(MRC$ecog_status =="3", "3",
+                                                  ifelse(MRC$ecog_status =="4", "3",NA))))))
+                                                  
+table(MRC$ecog_status, exclude = NULL)
+MRC$ecog_status <-as.factor(MRC$ecog_status)
+
+
+
+#=============Blood test at baseline
+
+summary(MRC$blds_hb2)
+
+table(MRC$hiv_enrollment, exclude = NULL)
+MRC$hiv_enrollment<- ifelse(MRC$hiv_enrollment == "0", "testnotd",
+                            ifelse(MRC$hiv_enrollment =="1", "positive",
+                                   ifelse(MRC$hiv_enrollment =="2", "negative",NA)))
+
+MRC$hiv_enrollment <-as.factor(MRC$hiv_enrollment)
+                                          
+
+#==========Colonoscopies================================================
+table(MRC$prior_c_scope, exclude = NULL)
+
+MRC$prior_c_scope <- ifelse(MRC$prior_c_scope == "1", "1",
+                           ifelse(MRC$prior_c_scope =="2", "2",NA))
+                                  
+table(MRC$prior_c_scope, exclude = NULL)                                      
+MRC$prior_c_scope <-as.factor(MRC$prior_c_scope)
+
+
+#colonoscopy
+table(MRC$colonoscopy_at_visit1, exclude = NULL)
+MRC$colonoscopy_at_visit <-as.factor(MRC$colonoscopy_at_visit)
+
+
+#==================Radiological assessment===============================
+table(MRC$radiologic_stage, exclude = NULL)
+MRC$radiologic_stage <- ifelse(MRC$radiologic_stage == "0", "0",
+                           ifelse(MRC$radiologic_stage =="1", "1",
+                                  ifelse(MRC$radiologic_stage =="2", "2",
+                                         ifelse(MRC$radiologic_stage=="3" , "2",
+                                                ifelse(MRC$radiologic_stage =="4", "2",
+                                                       ifelse(MRC$radiologic_stage =="5", "3",
+                                                              ifelse(MRC$radiologic_stage =="6", "3",
+                                                                     ifelse(MRC$radiologic_stage =="7", "3",
+                                                       ifelse(MRC$radiologic_stage =="8", "4","4")))))))))
+
+table(MRC$radiologic_stage, exclude = NULL)
+MRC$radiologic_stage <-as.factor(MRC$radiologic_stage)
+
+
+table(MRC$rad_sensitize_agent___1, exclude = NULL)
+MRC$rad_sensitize_agent___1 <-as.factor(MRC$rad_sensitize_agent___1)
+
+#===================MDT meeting
+
+
+
+#==================Histology evidence## several variables have high missing reconfirm after the end of the study 
+#histology1
+table(MRC$histology___1, exclude = NULL)
+MRC$histology___1 <-as.factor(MRC$histology___1)
+
+#================================Chemotherapy
+table(MRC$chemo_trial, exclude  = NULL)
+table(MRC$chemo_drug, exclude  = NULL)
+MRC$chemo_drug <- ifelse(MRC$chemo_drug== "0", "NO", "Yes")
+table(MRC$chemo_drug, exclude  = NULL)
+MRC$chemo_drug <-as.factor(MRC$chemo_drug)
+
+#===============================First surgical therapy
+
+table(MRC$pre_therap_surg_comps, exclude  = NULL)
+MRC$pre_therap_surg_comps <-as.factor(MRC$pre_therap_surg_comps)
+
+
+table(MRC$procedure1to17, exclude  = NULL)
+MRC$procedure1to17 <- ifelse(MRC$procedure1to17== "0", "0", 
+                             ifelse(MRC$procedure1to17== "1", "1", ">1"))
+                                  
+                            
+MRC$procedure1to17 <-as.factor(MRC$procedure1to17)
+
+
+
+
+
+#ca complication
+table(MRC$ca_complications___1, exclude = NULL)
+MRC$ca_complications___1 <-as.factor(MRC$ca_complications___1)
+
+
+#==================================Metastatic disease
+table(MRC$met_spread_site___1,exclude = NULL)
+table(MRC$met_spread_site___2,exclude = NULL)
+
+
+MRC$met_spread_site___1 <-as.factor(MRC$met_spread_site___1)
+MRC$met_spread_site___2 <-as.factor(MRC$met_spread_site___2)
+
+table(MRC$rx_mets___2,exclude = NULL)
+MRC$rx_mets___2 <-as.factor(MRC$rx_mets___2)
+
+
+
+MRC$ses_land<- ifelse(MRC$ses_land == "0", "no",
+                          ifelse(MRC$ses_land =="1", "yes",NA))
+
+table(MRC$ses_land, exclude = NULL)
+
+
+MRC$ses_car<- ifelse(MRC$ses_car == "0", "no",
+                         ifelse(MRC$ses_car =="1", "yes",NA))
+
+table(MRC$ses_car, exclude = NULL)
+
+MRC$ses_land <-as.factor(MRC$ses_land)
+MRC$ses_car <-as.factor(MRC$ses_car)
+
+table(MRC$beans_lentils, exclude = NULL)
+
+
+#================================================================================================================histology variables
+table(MRC$n_stage, exclude = NULL)
+MRC$n_stage<- ifelse(MRC$n_stage == "1", "N1$2",
+                      ifelse(MRC$n_stage =="2", "N1$2",
+                      ifelse(MRC$n_stage =="3", "N3",
+                             ifelse(MRC$n_stage =="4", "N4",
+                                    ifelse(MRC$n_stage =="Unknown", "Unknown",NA
+                             )))))
+
+table(MRC$n_stage, exclude = NULL)
+MRC$n_stage <-as.factor(MRC$n_stage)
+
+table(MRC$m_stage3, exclude = NULL)
+
+MRC$m_stage3<- ifelse(MRC$m_stage3 == "1", "M1",
+                      ifelse(MRC$m_stage3 =="2", "M23",
+                             ifelse(MRC$m_stage3 =="3", "M23",
+                                    ifelse(MRC$m_stage3 =="Unknown","Unknown", NA))))
+                                           
+table(MRC$m_stage3, exclude = NULL)
+
+MRC$m_stage3 <-as.factor(MRC$m_stage3)
+
+table(MRC$t_stage, exclude = NULL)
+MRC$t_stage<- ifelse(MRC$t_stage == "1", "1to4",
+                      ifelse(MRC$t_stage =="2", "1to4",
+                             ifelse(MRC$t_stage =="3", "1to4",
+                                    ifelse(MRC$t_stage =="4", "1to4",
+                                           ifelse(MRC$t_stage =="5", "5",
+                                                  ifelse(MRC$t_stage =="6", "6",
+                                                  ifelse(MRC$t_stage =="Unknown","Unknown", NA)))))))
+table(MRC$t_stage, exclude = NULL)
+MRC$t_stage <-as.factor(MRC$t_stage)
+
+table(MRC$mucinous, exclude = NULL)
+MRC$mucinous<- ifelse(MRC$mucinous == "0", "0$1",
+                      ifelse(MRC$mucinous =="1", "0$1",
+                             ifelse(MRC$mucinous =="2", "2",
+                                    ifelse(MRC$mucinous =="Unknown","Unknown", NA))))
+
+
+table(MRC$mucinous, exclude = NULL)
+
+
+MRC$mucinous <-as.factor(MRC$mucinous)
+
+
+table(MRC$mucinous_diag, exclude = NULL)
+
+MRC$mucinous_diag<- ifelse(MRC$mucinous_diag == "0", "0$1",
+                       ifelse(MRC$mucinous_diag =="1", "0$1",
+                              ifelse(MRC$mucinous_diag =="2", "2",
+                                     NA))) 
+
+table(MRC$mucinous_diag, exclude = NULL)
+MRC$mucinous_diag <-as.factor(MRC$mucinous_diag)
+
+
+
+table(MRC$signet_ring_ca, exclude = NULL)
+
+table(MRC$histology___1, exclude = NULL)
+table(MRC$m_stage3, exclude = NULL)
+
+table(MRC$histo_ca_pre_rx, exclude = NULL)
+table(MRC$signet_ring_ca, exclude = NULL)
+
+table(MRC$lesion_size_long, exclude = NULL)
+MRC$lesion_size_long <- as.numeric(MRC$lesion_size_long, exclude = NULL)
+
+MRC$lesion_size_long<- ifelse(MRC$lesion_size_long <=50, "less50",
+                            ifelse(MRC$lesion_size_long >50 & MRC$lesion_size_long <=100,"100-200",
+                                   ifelse(MRC$lesion_size_long >100 & MRC$lesion_size_long <=100,">100",
+                                          ifelse(MRC$lesion_size_long >100 & MRC$lesion_size_long <=670,">100",
+                                          ifelse(MRC$lesion_size_long ==999,"Unknown", NA     
+                                          )))))
+
+
+table(MRC$lesion_size_long, exclude = NULL)
+
+
+table(MRC$lesion_size_long_short, exclude = NULL)
+
+MRC$lesion_size_long_short<- ifelse(MRC$lesion_size_long_short <=50, "less50",
+                              ifelse(MRC$lesion_size_long_short >50 & MRC$lesion_size_long_short <=100,"50-100",
+                                     ifelse(MRC$lesion_size_long_short >100 & MRC$lesion_size_long_short <=730,"100-730",
+                                            ifelse(MRC$lesion_size_long_short ==999,"Unknown",NA
+                                                      
+                                                   ))))
+
+
+table(MRC$lesion_size_long_short, exclude = NULL)
+
+table(MRC$total_lymphs_found, exclude = NULL)
+MRC$total_lymphs_found<-ifelse(MRC$total_lymphs_found <=10, "less10",
+                                     ifelse(MRC$total_lymphs_found >10 & MRC$total_lymphs_found <=15, "10-20",
+                                            ifelse(MRC$total_lymphs_found >15 & MRC$total_lymphs_found <=63,"20-63",
+                                                   ifelse(MRC$total_lymphs_found ==999,"Unknown", NA))))
+                                                          
+
+
+
+table(MRC$total_lymphs_found2, exclude = NULL)
+
+table(MRC$lymphatic_invasion, exclude = NULL)
+MRC$lymphatic_invasion<- ifelse(MRC$lymphatic_invasion == "0", "0$1",
+                            ifelse(MRC$lymphatic_invasion =="1", "0$1",
+                                   ifelse(MRC$lymphatic_invasion =="2", "2",
+                                          ifelse(MRC$lymphatic_invasion =="Unknown", "Unknown"  , NA))))
+
+
+table(MRC$lymphatic_invasion, exclude = NULL)
+
+
+
+
+
+
+
+table(MRC$ca_circum_margins, exclude = NULL)
+
+MRC$ca_circum_margins<- ifelse(MRC$ca_circum_margins<10, "<10",
+                                ifelse(MRC$ca_circum_margins >=10 & MRC$ca_circum_margins <=165, "10to165",
+                                       ifelse(MRC$ca_circum_margins =="999","Unknown", NA)))
+                                        
+
+table(MRC$tmr_dist_to_cutbwl_marg, exclude = NULL)
+
+
+table(MRC$tmr_dist_to_cutbwl_marg, exclude = NULL)
+
+MRC$tmr_dist_to_cutbwl_marg<- ifelse(MRC$tmr_dist_to_cutbwl_marg<50, "<50",
+                                ifelse(MRC$tmr_dist_to_cutbwl_marg >=50 & MRC$tmr_dist_to_cutbwl_marg <=430, "50to165",
+                                       ifelse(MRC$tmr_dist_to_cutbwl_marg =="999","Unknown", NA)))
+
+
+table(MRC$tmr_dist_to_cutbwl_marg)
+
+table(MRC$grade_differentation, exclude = NULL)
+MRC$grade_differentation<- ifelse(MRC$grade_differentation == "2", "23",
+                                 ifelse(MRC$grade_differentation =="3", "23",
+                                        ifelse(MRC$grade_differentation =="4", "4",
+                                               ifelse(MRC$grade_differentation =="Unknown", "Unknown"  , NA))))
+table(MRC$grade_differentation, exclude = NULL)
+
+table(MRC$subject_grading, exclude = NULL)
+MRC$subject_grading<- ifelse(MRC$subject_grading == "1", "1",
+                                   ifelse(MRC$subject_grading =="3", "3",
+                            ifelse(MRC$subject_grading =="Unknown", "Unknown"  , NA)))
+
+table(MRC$subject_grading, exclude = NULL)
+table(test$grade_differentation)
+
+
+table(MRC$excision_margin, exclude = NULL)
+MRC$excision_margin<- ifelse(MRC$excision_margin == "1", "1",
+                              ifelse(MRC$excision_margin =="2", "2",
+                                     ifelse(MRC$excision_margin =="Unknown", "Unknown"  , NA)))
+
+
+table(MRC$excision_margin2, exclude = NULL)
+
+table(MRC$vasc_invasion, exclude = NULL)
+
+MRC$vasc_invasion<- ifelse(MRC$vasc_invasion == "1", "1",
+                              ifelse(MRC$vasc_invasion =="2", "2",
+                                     ifelse(MRC$vasc_invasion =="Unknown", "Unknown", NA)))
+table(MRC$vasc_invasion2)
+
+table(MRC$perforation, exclude = NULL)
+
+MRC$perforation<- ifelse(MRC$perforation == "1", "1",
+                            ifelse(MRC$perforation =="2", "2",
+                                   ifelse(MRC$perforation =="Unknown", "Unknown", NA)))
+table(MRC$perforation, exclude = NULL)
+
+
+table(MRC$serosal_involvement, exclude = NULL)
+MRC$serosal_involvement <- ifelse(MRC$serosal_involvement == "1", "1",
+                         ifelse(MRC$serosal_involvement =="2", "2",
+                                ifelse(MRC$serosal_involvement =="Unknown", "Unknown", NA)))
+table(MRC$serosal_involvement2, exclude = NULL)
+
+
+table(MRC$site_stage_classification, exclude = NULL)
+MRC$site_stage_classification <- ifelse(MRC$site_stage_classification== "1", "12",
+                                   ifelse(MRC$site_stage_classification =="2", "12",
+                                          ifelse(MRC$site_stage_classification =="3", "34",
+                                          ifelse(MRC$site_stage_classification =="4", "34",
+                                                 ifelse(MRC$site_stage_classification =="5", "56",
+                                                        ifelse(MRC$site_stage_classification =="6", "56",
+                                          ifelse(MRC$site_stage_classification =="Unknown", "Unknown", NA)))))))
+
+
+table(MRC$site_stage_classification2, exclude = NULL)
+
+table(MRC$antigen_study, exclude = NULL)
+
+MRC$antigen_study <- ifelse(MRC$antigen_study == "1", "1to2",
+                                   ifelse(MRC$antigen_study =="2", "2to3",
+                                          ifelse(MRC$antigen_study =="3", "3",  
+                                          ifelse(MRC$antigen_study =="Unknown", "Unknown", NA))))
+
+table(MRC$antigen_study, exclude = NULL)
+
+
+
+table(MRC$msi, exclude = NULL)
+MRC$msi <- ifelse(MRC$msi == "1", "lowhigh",
+                            ifelse(MRC$msi =="2", "lowhigh",
+                                   ifelse(MRC$msi =="3", "lowhigh",  
+                                          ifelse(MRC$msi =="Unknown", "Unknown", NA))))
+
+
+table(MRC$add_pathologies, exclude = NULL)
+MRC$msi <-as.factor(MRC$msi)
+
+table(MRC$braf_mutation, exclude = NULL)
+table(MRC$nras, exclude = NULL)
+MRC$nras <- ifelse(MRC$nras == "0", "0",
+                  ifelse(MRC$nras =="1", "12",
+                         ifelse(MRC$nras =="2", "12",  
+                                ifelse(MRC$nras =="Unknown", "Unknown", NA))))
+
+table(MRC$kras, exclude = NULL)
+MRC$kras <- ifelse(MRC$kras == "0", "0",
+                   ifelse(MRC$kras =="1", "12",
+                          ifelse(MRC$kras =="2", "12",  
+                                 ifelse(MRC$kras =="Unknown", "Unknown", NA))))
+
+MRC$kras <- as.factor(MRC$kras)
+
+
+
+
+
+#===================================================calculate date last seen to confirm what is in the data
+MRC$date_of_first_visit <-anydate(MRC$date_of_first_visit)
+MRC$date_last_seen <-anydate(MRC$date_last_seen)
+class(MRC$date_of_first_visit)
+MRC$os_yrs =   abs(as.vector(difftime(MRC$date_last_seen,  MRC$date_of_first_visit, units='days')))
+MRC$os_yrs = (MRC$os_yrs)/30
+summary(MRC$os_yrs)
+
+summary(MRC$mnths_fu_post_dx)
+summary(MRC$mnths_fu_post_death)
+
+
+#No of months follow-up post first visit to the CRU
+summary(MRC$mnths_fu_post_dx, na.rm=TRUE)
+
+MRC$survival <- ifelse(MRC$mnths_fu_post_dx >= 36, "survived", "not survived")
+table(MRC$survival, exclude = NULL) 
+which(MRC$mnths_fu_post_death <=36)
+summary( MRC$mnths_fu_post_death)
+#========================================
+
+table(MRC$excision_margin, exclude = NULL)
+
+summary(MRC$lymph_nodes)
+
+table(test$t_stage)
+#==================================================================================================================================
+#import data for imputation
+write.csv(MRCdata, file="MRCdata.csv")
+rm(list = ls())
+
+MRCdata <- read.csv("C:/Users/ikeac/Desktop/PhD_ana/MRCdata.csv", header = T, sep = ";")
+MRCdata=MRC
+str(MRCdata)
+
+
+MRCdata$vasc_invasion <- as.factor(MRCdata$vasc_invasion )
+MRCdata$lesion_size_long<- as.factor(MRCdata$lesion_size_long)
+MRCdata$excision_margin  <-as.factor(MRCdata$excision_margin )
+MRCdata$ca_circum_margins <-as.factor(MRCdata$ca_circum_margins)
+MRCdata$grade_differentation <-as.factor(MRCdata$grade_differentation)
+MRCdata$perforation   <-as.factor(MRCdata$perforation  )
+MRCdata$serosal_involvement <-as.factor(MRCdata$serosal_involvement)
+MRCdata$antigen_study  <-as.factor(MRCdata$antigen_study)
+MRCdata$vasc_invasion  <-as.factor(MRCdata$vasc_invasion)
+
+MRCdata$lymphatic_invasion <-as.factor(MRCdata$lymphatic_invasion)
+MRCdata$ lymphatic_invasion<- as.factor(MRCdata$ lymphatic_invasion)
+MRCdata$site_stage_classification<- as.factor(MRCdata$site_stage_classification)
+
+MRCdata$subject_grading <-as.factor(MRCdata$subject_grading)
+
+MRCdata$lesion_size_long_short<-as.factor(MRCdata$lesion_size_long_short)
+MRCdata$tmr_dist_to_cutbwl_marg <-as.factor(MRCdata$tmr_dist_to_cutbwl_marg)
+
+
+
+
+#removevariables
+
+MRCdata <-MRCdata[,-c(107,111:118)]
+
+MRCdata$hpt <-as.factor(MRCdata$hpt)
+MRCdata$prev_gi_dx___8 <-as.factor(MRCdata$prev_gi_dx___8)
+MRCdata$non_ca_rx___5 <-as.factor(MRCdata$non_ca_rx___5)
+MRCdata$fam_hist_ca2 <- as.factor(MRCdata$fam_hist_ca2)
+MRCdata$employment <- as.factor(MRCdata$employment)
+MRCdata$education2 <- as.factor(MRCdata$education2)
+MRCdata$non_ca_rx___3 <-as.factor(MRCdata$non_ca_rx___3)
+MRCdata$non_ca_rx___1 <-as.factor(MRCdata$non_ca_rx___1)
+MRCdata$medical_rx___2 <-as.factor(MRCdata$medical_rx___2)
+MRCdata$alt_therapy_practitioner___4 <-as.factor(MRCdata$alt_therapy_practitioner___4)
+MRCdata$alt_therapy_practitioner___3 <-as.factor(MRCdata$alt_therapy_practitioner___3)
+MRCdata$pt_prev_ca <-as.factor(MRCdata$pt_prev_ca) 
+MRCdata$site_primary_crc___4 <-as.factor(MRCdata$site_primary_crc___4)
+MRCdata$malig_location___1 <-as.factor(MRCdata$malig_location___1) 
+MRCdata$malig_location___2 <-as.factor(MRCdata$malig_location___2) 
+MRCdata$malig_location___3 <-as.factor(MRCdata$malig_location___3) 
+MRCdata$refusal_rx_option___0 <-as.factor(MRCdata$refusal_rx_option___0) 
+MRCdata$meat <-as.factor(MRCdata$meat) 
+MRCdata$milk___0 <-as.factor(MRCdata$milk___0)
+MRCdata$fats___3 <-as.factor(MRCdata$fats___3)
+MRCdata$fats___6 <-as.factor(MRCdata$fats___6)
+MRCdata$fats___7 <-as.factor(MRCdata$fats___7)
+MRCdata$fats___8 <-as.factor(MRCdata$fats___8)
+MRCdata$fats___10 <-as.factor(MRCdata$fats___10)
+MRCdata$fats___0 <-as.factor(MRCdata$fats___0)
+MRCdata$asa_grading2 <-as.factor(MRCdata$asa_grading2)
+MRCdata$ecog_status2 <-as.factor(MRCdata$ecog_status2)
+MRCdata$hiv_enrollment <-as.factor(MRCdata$hiv_enrollment)
+MRCdata$prior_c_scope2 <-as.factor(MRCdata$prior_c_scope2)
+MRCdata$colonoscopy_at_visit2  <-as.factor(MRCdata$colonoscopy_at_visit2 )
+MRCdata$radiologic_stage2 <-as.factor(MRCdata$radiologic_stage2)
+MRCdata$procedure_name___1 <-as.factor(MRCdata$procedure_name___1)
+MRCdata$procedure_name___6 <-as.factor(MRCdata$procedure_name___6)
+MRCdata$procedure_name___7 <-as.factor(MRCdata$procedure_name___7)
+MRCdata$medical_rx___13 <-as.factor(MRCdata$medical_rx___13)
+MRCdata$medical_rx___7 <-as.factor(MRCdata$medical_rx___7)
+MRCdata$pt_prev_ca <-as.factor(MRCdata$pt_prev_ca)
+MRCdata$prev_ca_rx___1 <-as.factor(MRCdata$prev_ca_rx___1)
+MRCdata$rx_mdt1___1 <-as.factor(MRCdata$rx_mdt1___1)
+MRCdata$rx_mdt1___3 <-as.factor(MRCdata$rx_mdt1___3)
+MRCdata$rx_mdt1___2 <-as.factor(MRCdata$rx_mdt1___2)
+MRCdata$rx_mdt1___5 <-as.factor(MRCdata$rx_mdt1___5)
+MRCdata$histology___1 <-as.factor(MRCdata$histology___1)
+MRCdata$rad_sensitize_agent___1 <-as.factor(MRCdata$rad_sensitize_agent___1)
+MRCdata$radiation_complication___4 <-as.factor(MRCdata$radiation_complication___4)
+MRCdata$chemo_drug_1___5 <-as.factor(MRCdata$chemo_drug_1___5)
+MRCdata$ca_complications___1 <-as.factor(MRCdata$ca_complications___1)
+MRCdata$met_spread_site___1 <-as.factor(MRCdata$met_spread_site___1)
+MRCdata$met_spread_site___2 <-as.factor(MRCdata$met_spread_site___2)
+MRCdata$met_spread_site___5 <-as.factor(MRCdata$met_spread_site___5)
+MRCdata$met_spread_site___7 <-as.factor(MRCdata$met_spread_site___7)
+MRCdata$pre_therap_surg_comps <-as.factor(MRCdata$pre_therap_surg_comps)
+
+MRCdata$fats___1   <-as.factor(MRCdata$fats___1)
+MRCdata$rx_mets___2 <-as.factor(MRCdata$rx_mets___2)
+MRCdata$rx_mets___3 <-as.factor(MRCdata$rx_mets___3)
+#MRCdata$beans_lentils <-as.integer(MRCdata$beans_lentils)
+MRCdata$death2 <- as.factor(MRCdata$death2)
+MRCdata$status2 <- as.factor(MRCdata$status2)
+ #for numeric features
+MRCdata$age_at_first_vst <- as.numeric(MRCdata$age_at_first_vst)
+MRCdata$bread <- as.numeric(MRCdata$bread)
+MRCdata$bread_days <-as.numeric(MRCdata$bread_days)
+MRCdata$veges   <-as.numeric(MRCdata$veges)
+MRCdata$pap_rice <-as.numeric(MRCdata$pap_rice)
+
+
+MRCdata$meals_dly <-as.numeric(MRCdata$meals_dly)
+MRCdata$chicken_fish <-as.numeric(MRCdata$chicken_fish)
+MRCdata$processed_foods <-as.numeric(MRCdata$processed_foods)
+MRCdata$beans_lentils <-as.numeric(MRCdata$beans_lentils)
+MRCdata$cook_methods <-as.numeric(MRCdata$cook_methods)
+MRCdata$fast_food <-as.numeric(MRCdata$fast_food)
+MRCdata$junk_foods <-as.numeric(MRCdata$junk_foods)
+MRCdata$git_pre_length_of_time <-as.numeric(MRCdata$git_pre_length_of_time)
+MRCdata$travel_distance_linear <-as.numeric(MRCdata$travel_distance_linear)
+
+MRCdata$bmi <-as.numeric(MRCdata$bmi)
+MRCdata$caffeinated_drinks <-as.numeric(MRCdata$caffeinated_drinks)
+MRCdata$blds_hb2 <-as.numeric(MRCdata$blds_hb2)
+MRCdata$fruit <-as.numeric(MRCdata$fruit)
+
+
+
+summary(MRCdata$age_at_first_vst)
+
+
+#
+
+#=======================================================Analysis=============================================================#
+#################################	
+
+
+dt1 =MRCdata[complete.cases(MRCdata),]																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																											
+
+table(dt1$death2)
+sum(!is.na (MRCdata))
+MRCdata <-MRCdata[,-2]
+MRCc <- MRCdata[ , colSums(is.na(MRCdata)) ==0]
+table(dt1$death2)
+MISS <- rowSums(is.na (MRCdata))
+data.frame(MISS)
+table(is.na(MRCdata))
+
+#Check the data for missing values.
+  sapply(MRC3, function(x) sum(is.na(x)))
+  
+#OR to see columns with names
+  names(which(colSums(!is.na(MRC3))>0))
+  
+  
+  MRCc <- MRCdata[ , colSums(is.na(MRCdata)) == 0]
+  MRCi <- MRCdata[ , colSums(is.na(MRCdata)) >0]
+  
+  MRCc<-  data.frame(MRCi)
+  #or
+  #MRC3[ , apply(MRC3, 2, function(x) !any(is.na(x)))]
+  
+  d <- Merge(MRCc, MRCi, by="row.names", quiet=TRUE)
+  # suppress output to console
+  d <- Merge(Emp1a, Emp1b, by="row.names", quiet=TRUE)
+  
+  
+  comp <-colSums(is.na(MRC3))>0
+  incomp <-colSums(!is.na(MRC3))>0
+  comp <- data.frame(comp)
+  dt1 = MRC3[complete.cases(MRC3),]
+  dt2 = MRC3[!complete.cases(MRC3),]
+
+  #===Imputation
+  str(MRCdata)
+  library(missForest)
+  set.seed(81)
+  for_imp <- missForest(xmis = MRCdata, maxiter = 10, ntree = 100,
+                         variablewise = FALSE,
+                         decreasing = FALSE, verbose = FALSE,
+                         mtry = floor(sqrt(ncol(MRCdata))), replace = TRUE,
+                         classwt = NULL, cutoff = NULL, strata = NULL,
+                         sampsize = NULL, nodesize = NULL, maxnodes = NULL,
+                         xtrue = NA, parallelize = "no")
+  
+for_imp$OOBerror
+imputed<-for_imp$ximp
+is.na(imputed)
+names(imputed)
+ 
+write.csv(imputed, file ="imputed.csv") 
+
+str(imputed)
+table(imputed$beans_lentils)
+  #install.packages("VIM")
+  library(VIM) # optional
+  library(mice)
+  library(BaylorEdPsych)
+  library(mvnmle)
+  #library(missForest)
+ 
+  Mcar<-LittleMCAR(data.frame(MRCi[,15:20]))
+  Mcar[c("chi.square", "df", "p.value")]
+  
+ 
+  
+  md.pattern(MRCdata)
+  
+  # library(VIM): optional
+  aggr(MRCi, col=c('navyblue','yellow'),
+       numbers=TRUE, sortVars=TRUE,
+       labels=names(MRCi), cex.axis=.7,
+       gap=3, ylab=c("Missing data","Pattern"))
+  
+  #identify cases with highest missing
+  na_rows = rowSums(is.na(MRCdata))
+  list(row)
+  which.max(na_rows) 
+  which(na_rows > 50)
+  
+shadow<- as.data.frame(abs(is.na(MRCi)))
+miss.shadow<-shadow[,which(unlist(lapply(shadow,sum))!=0)]
+round(cor(miss.shadow),3)  
+#===============================================================================================================================
+
+MRC$gender<- as.factor(MRC$gender)
+MRC$race2<- as.factor(MRC$race2)
+MRC$hospital2 <-as.factor(MRC$hospital2)
+MRC$language2 <-as.factor(MRC$language2)
+MRC$place_of_birth <-as.factor(MRC$place_of_birth)
+MRC$relationship_staus2 <-as.factor(MRC$relationship_staus2)
+MRC$ses_land <-as.factor(MRC$ses_land)
+MRC$ses_car <-as.factor(MRC$ses_car)
+MRC$citizenship <-as.factor(MRC$citizenship)
+MRC$genetic_counselling <-as.factor(MRC$genetic_counselling)
+MRC$referral<- as.factor(MRC$referral)
+MRC$smoking<- as.factor(MRC$smoking)
+MRC$histology___1 <-as.factor(MRC$histology___1)
+MRC$alcohol_consump <-as.factor(MRC$alcohol_consump)
+MRC$dm <-as.factor(MRC$dm)
+MRC$hpt <-as.factor(MRC$hpt)
+MRC$prev_gi_dx___8 <-as.factor(MRC$prev_gi_dx___8)
+MRC$non_ca_rx___5 <-as.factor(MRC$non_ca_rx___5)
+MRC$fam_hist_ca2 <- as.factor(MRC$fam_hist_ca2)
+MRC$employment <- as.factor(MRC$employment)
+MRC$education2 <- as.factor(MRC$education2)
+MRC$non_ca_rx___3 <-as.factor(MRC$non_ca_rx___3)
+MRC$non_ca_rx___1 <-as.factor(MRC$non_ca_rx___1)
+MRC$race2 <-as.factor(MRC$race2)
+MRC$alt_therapy_practitioner___4 <-as.factor(MRC$alt_therapy_practitioner___4)
+MRC$alt_therapy_practitioner___3 <-as.factor(MRC$alt_therapy_practitioner___3)
+MRC$pt_prev_ca <-as.factor(MRC$pt_prev_ca) 
+MRC$site_primary_crc___4 <-as.factor(MRC$site_primary_crc___4)
+MRC$malig_location___1 <-as.factor(MRC$malig_location___1) 
+MRC$malig_location___2 <-as.factor(MRC$malig_location___2) 
+MRC$malig_location___3 <-as.factor(MRC$malig_location___3) 
+MRC$refusal_rx_option___0 <-as.factor(MRC$refusal_rx_option___0) 
+MRC$meat <-as.factor(MRC$meat) 
+MRC$milk___0 <-as.factor(MRC$milk___0)
+MRC$fats___3 <-as.factor(MRC$fats___3)
+MRC$fats___6 <-as.factor(MRC$fats___6)
+MRC$fats___7 <-as.factor(MRC$fats___7)
+MRC$fats___8 <-as.factor(MRC$fats___8)
+MRC$fats___10 <-as.factor(MRC$fats___10)
+MRC$fats___0 <-as.factor(MRC$fats___0)
+MRC$asa_grading2 <-as.factor(MRC$asa_grading2)
+MRC$ecog_status2 <-as.factor(MRC$ecog_status2)
+MRC$hiv_enrollment <-as.factor(MRC$hiv_enrollment)
+MRC$prior_c_scope2 <-as.factor(MRC$prior_c_scope2)
+MRC$colonoscopy_at_visit2  <-as.factor(MRC$colonoscopy_at_visit2 )
+MRC$radiologic_stage2 <-as.factor(MRC$radiologic_stage2)
+MRC$procedure_name___1 <-as.factor(MRC$procedure_name___1)
+MRC$procedure_name___6 <-as.factor(MRC$procedure_name___6)
+MRC$procedure_name___7 <-as.factor(MRC$procedure_name___7)
+MRC$medical_rx___13 <-as.factor(MRC$medical_rx___13)
+MRC$medical_rx___7 <-as.factor(MRC$medical_rx___7)
+MRC$pt_prev_ca <-as.factor(MRC$pt_prev_ca)
+MRC$prev_ca_rx___1 <-as.factor(MRC$prev_ca_rx___1)
+MRC$rx_mdt1___1 <-as.factor(MRC$rx_mdt1___1)
+MRC$rx_mdt1___3 <-as.factor(MRC$rx_mdt1___3)
+MRC$rx_mdt1___2 <-as.factor(MRC$rx_mdt1___2)
+MRC$race2 <-as.factor(MRC$race2)
+MRC$histology___1 <-as.factor(MRC$histology___1)
+MRC$rad_sensitize_agent___1 <-as.factor(MRC$rad_sensitize_agent___1)
+MRC$radiation_complication___4 <-as.factor(MRC$radiation_complication___4)
+MRC$chemo_drug_1___5 <-as.factor(MRC$chemo_drug_1___5)
+MRC$ca_complications___1 <-as.factor(MRC$ca_complications___1)
+MRC$met_spread_site___1 <-as.factor(MRC$met_spread_site___1)
+MRC$met_spread_site___2 <-as.factor(MRC$met_spread_site___2)
+MRC$met_spread_site___5 <-as.factor(MRC$met_spread_site___5)
+MRC$met_spread_site___7 <-as.factor(MRC$met_spread_site___7)
+MRC$radiologic_stage2 <-as.factor(MRC$radiologic_stage2)
+MRC$fats___1   <-as.factor(MRC$fats___1)
+MRC$rx_mets___2 <-as.factor(MRC$rx_mets___2)
+MRC$rx_mets___3 <-as.factor(MRC$rx_mets___3)
+#MRC$beans_lentils <-as.integer(MRC$beans_lentils)
+MRC$death2 <- as.factor(MRC$death2)
+MRC$status2 <- as.factor(MRC$status2)
+MRC$hospital2 <- as.factor(MRC$hospital2)
+MRC$histo_ca_pre_rx <- as.factor(MRC$histo_ca_pre_rx)
+MRC$rx_mdt1___5  <- as.factor(MRC$rx_mdt1___5 )
+MRC$pre_therap_surg_comps <- as.factor(MRC$ pre_therap_surg_comps)
+MRC$colonoscopy_at_visit1 <- as.factor(MRC$ colonoscopy_at_visit1)
+MRC$rx_mdt1to4 <- as.factor(MRC$rx_mdt1to4)
+MRC$procedure1to17 <- as.factor(MRC$procedure1to17)
+
+#for numeric features
+MRC$age_at_first_vst <- as.numeric(MRC$age_at_first_vst)
+MRC$bread <- as.numeric(MRC$bread)
+MRC$bread_days <-as.numeric(MRC$bread_days)
+MRC$veges   <-as.numeric(MRC$veges)
+MRC$pap_rice <-as.numeric(MRC$pap_rice)
+table(MRC$death2)
+
+MRC$meals_dly <-as.numeric(MRC$meals_dly)
+MRC$chicken_fish <-as.numeric(MRC$chicken_fish)
+MRC$processed_foods <-as.numeric(MRC$processed_foods)
+MRC$beans_lentils <-as.numeric(MRC$beans_lentils)
+MRC$cook_methods <-as.numeric(MRC$cook_methods)
+MRC$fast_food <-as.numeric(MRC$fast_food)
+MRC$junk_foods <-as.numeric(MRC$junk_foods)
+MRC$git_pre_length_of_time <-as.numeric(MRC$git_pre_length_of_time)
+MRC$travel_distance_linear <-as.numeric(MRC$travel_distance_linear)
+
+MRC$bmi <-as.numeric(MRC$bmi)
+MRC$caffeinated_drinks <-as.numeric(MRC$caffeinated_drinks)
+MRC$blds_hb2 <-as.numeric(MRC$blds_hb2)
+MRC$fruit <-as.numeric(MRC$fruit)
+
+
+MRC <- imputed
+table(MRC$race2)
