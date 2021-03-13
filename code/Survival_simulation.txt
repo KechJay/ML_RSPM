@@ -1,0 +1,330 @@
+#======================================================simulation 680
+#Simulate based  on the distribution of the MRC data and coefficients from 10000 bootstrap
+rm(list=ls())
+str(MRC)
+summary(MRC$record_id)
+
+N <- 680
+ID<-sample(680, 680, replace=F)
+
+#histology
+table(MRC$histology___1)
+hist <- sample(c(0,1), 680, replace = TRUE, prob = c(0.3867647059, 0.6132352941))
+beta1 <-  1.27191265
+
+table(MRC$ca_complications___1)
+ca_comp <- sample(c(0,1),size=680, replace=TRUE, prob=c(0.5514705882,0.4485294118))
+beta2 <-  0.29030023
+
+
+table(MRC$procedure1to17)
+# >1   0   1 
+#28 279 373  
+procedure <-sample(c(0, 1), size =680, replace=TRUE, prob=c(0.41029411765, 0.5897058824))
+beta3 <- -0.35648273
+
+#hospital
+table(MRC$hospital)
+hosp <- sample(c(1,2,3), 680, replace = TRUE, prob = c(0.3573529412,0.2470588235,0.3955882353))
+beta4 <-c(-1.12064784,-1.33478904)
+#radiology
+table(MRC$radiologic_stage2)  
+rad <- sample(c(0,1,2,3), 680, replace = TRUE, prob = c(0.2279411765, 0.1147058824, 0.3455882353, 0.3117647059))
+beta5 <-c(-0.50119664,0.05613542,-0.69414907)
+
+table(MRC$language2)
+lang <- sample(c(1,2,3), 680, replace = TRUE, prob = c(0.35,0.4647058824,0.185291176))
+beta6 <-c(-0.42348179,-0.49313648)
+
+table(MRC$race)
+race <- sample(c(1,2,3), 680, replace = TRUE, prob = c(0.3602941176, 0.5029411765,0.1367647059 ))
+beta7 <-c(-0.02694048,0.04633203)
+
+table(MRC$status2)
+status <- sample(c(0,1),size=680, replace=TRUE, prob=c(0.6352941176,0.3647058824))
+beta8 <-  -0.82159783
+
+
+#==============================================================Simulation was done with and without signal
+#=======Combine data for simulation without signal
+#outcome
+table(MRC$death2)
+surv_nosignal <- sample(c(0,1),size=680, replace=TRUE, prob=c(0.4132352941,0.5867647059))
+
+simRandom<- cbind(ID,hist,ca_comp,procedure,rad,hosp,lang,race,status,surv_nosignal)
+
+
+simRandom2 <- data.frame(simRandom)
+
+table(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-as.factor(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-ifelse(simRandom2$surv_nosignal=="0", "notsurvived", "survived")
+
+str(simRandom2)
+y2 <-simRandom2$death2
+
+data <-simRandom2
+data$surv_signal2 <-data$surv_nosignal
+data$surv_signal2 <-as.factor(data$surv_signal2)
+data<-data[,-10]
+#===================================================combine data for simulation with signal
+#sim with signal
+
+set.seed(3456)
+surv_signal<-c(beta1*hist +beta2*ca_comp +beta3*procedure+beta4*hosp + beta5*rad+
+                 beta6*lang +beta7*race+beta8*status+0.2*rnorm(680,20,3)
+)
+
+
+summary(surv_signal)
+set.seed(3456)
+surv_signal2<-ifelse(surv_signal>0.987, 1, 0)
+table(surv_signal2)
+
+
+
+table(data$signal697)
+#
+
+#put all features as factors
+
+#============================================================================sim 3400=========================================
+NumSubj <- 3400
+ID<-sample(3400, 3400, replace=F)
+
+#histology
+table(MRC$histology___1)
+hist <- sample(c(0,1), 3400, replace = TRUE, prob = c(0.3867647059, 0.6132352941))
+beta1 <-  1.27191265
+
+table(MRC$ca_complications___1)
+ca_comp <- sample(c(0,1),size=3400, replace=TRUE, prob=c(0.5514705882,0.4485294118))
+beta2 <-  0.29030023
+
+
+table(MRC$procedure1to17)
+# >1   0   1 
+#28 279 373  
+procedure <-sample(c(0, 1), size =3400, replace=TRUE, prob=c(0.41029411765, 0.5897058824))
+beta3 <- -0.35648273
+
+#hospital
+table(MRC$hospital)
+hosp <- sample(c(1,2,3), 3400, replace = TRUE, prob = c(0.3573529412,0.2470588235,0.3955882353))
+beta4 <-c(-1.12064784,-1.33478904)
+#radiology
+table(MRC$radiologic_stage2)  
+rad <- sample(c(0,1,2,3), 3400, replace = TRUE, prob = c(0.2279411765, 0.1147058824, 0.3455882353, 0.3117647059))
+beta5 <-c(-0.50119664,0.05613542,-0.69414907)
+
+
+
+table(MRC$language2)
+lang <- sample(c(1,2,3), 3400, replace = TRUE, prob = c(0.35,0.4647058824,0.185291176))
+beta6 <-c(-0.42348179,-0.49313648)
+
+table(MRC$race)
+race <- sample(c(1,2,3), 3400, replace = TRUE, prob = c(0.3602941176, 0.5029411765,0.1367647059 ))
+beta7 <-c(-0.02694048,0.04633203)
+
+table(MRC$status2)
+status <- sample(c(0,1),size=3400, replace=TRUE, prob=c(0.6352941176,0.3647058824))
+beta8 <-  -0.82159783
+
+
+#=======================without signal
+#outcome
+table(MRC$death2)
+surv_nosignal <- sample(c(0,1),size=3400, replace=TRUE, prob=c(0.4132352941,0.5867647059))
+
+simRandom<- cbind(ID,hist,ca_comp,procedure,rad,hosp,lang,race,status,surv_nosignal)
+
+#summary statistics
+simRandom2 <- data.frame(simRandom)
+
+table(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-as.factor(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-ifelse(simRandom2$surv_nosignal=="0", "notsurvived", "survived")
+
+str(simRandom2)
+y2 <-simRandom2$death2
+data <-simRandom2
+data$surv_signal2 <-data$surv_nosignal
+data$surv_signal2 <-as.factor(data$surv_signal2)
+data<-data[,-10]
+#===================================================with signal
+set.seed(3456)
+surv_signal<-c(beta1*hist +beta2*ca_comp +beta3*procedure+beta4*hosp + beta5*rad+
+                 beta6*lang +beta7*race+beta8*status+0.2*rnorm(3400,20,3)
+)
+
+
+summary(surv_signal)
+surv_signal2<-ifelse(surv_signal<2.60, 1, 0)
+table(surv_signal2)
+#============================================================================================== 6800
+rm(list=ls())
+?sample
+#rnorm(n, mean = 0, sd = 1)
+str(MRC)
+summary(MRC$record_id)
+
+NumSubj <- 6800
+ID<-sample(6800, 6800, replace=F)
+
+#histology
+table(MRC$histology___1)
+hist <- sample(c(0,1), 6800, replace = TRUE, prob = c(0.3867647059, 0.6132352941))
+beta1 <-  1.27191265
+
+table(MRC$ca_complications___1)
+ca_comp <- sample(c(0,1),size=6800, replace=TRUE, prob=c(0.5514705882,0.4485294118))
+beta2 <-  0.29030023
+
+
+table(MRC$procedure1to17)
+# >1   0   1 
+#28 279 373  
+procedure <-sample(c(0, 1), size =6800, replace=TRUE, prob=c(0.41029411765, 0.5897058824))
+beta3 <- -0.35648273
+
+#hospital
+table(MRC$hospital)
+hosp <- sample(c(1,2,3), 6800, replace = TRUE, prob = c(0.3573529412,0.2470588235,0.3955882353))
+beta4 <-c(-1.12064784,-1.33478904)
+#radiology
+table(MRC$radiologic_stage2)  
+rad <- sample(c(0,1,2,3), 6800, replace = TRUE, prob = c(0.2279411765, 0.1147058824, 0.3455882353, 0.3117647059))
+beta5 <-c(-0.50119664,0.05613542,-0.69414907)
+
+
+table(MRC$language2)
+lang <- sample(c(1,2,3), 6800, replace = TRUE, prob = c(0.35,0.4647058824,0.185291176))
+beta6 <-c(-0.42348179,-0.49313648)
+
+table(MRC$race)
+race <- sample(c(1,2,3), 6800, replace = TRUE, prob = c(0.3602941176, 0.5029411765,0.1367647059 ))
+beta7 <-c(-0.02694048,0.04633203)
+
+table(MRC$status2)
+status <- sample(c(0,1),size=6800, replace=TRUE, prob=c(0.6352941176,0.3647058824))
+beta8 <-  -0.82159783
+
+#==============================================================sim without signal
+#outcome
+table(MRC$death2)
+surv_nosignal <- sample(c(0,1),size=6800, replace=TRUE, prob=c(0.4132352941,0.5867647059))
+
+
+simRandom<- cbind(ID,hist,ca_comp,procedure,rad,hosp,lang,race,status,surv_nosignal)
+
+#summary statistics
+simRandom2 <- data.frame(simRandom)
+
+table(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-as.factor(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-ifelse(simRandom2$surv_nosignal=="0", "notsurvived", "survived")
+
+str(simRandom2)
+y2 <-simRandom2$death2
+
+data <-simRandom2
+data$surv_signal2 <-data$surv_nosignal
+data$surv_signal2 <-as.factor(data$surv_signal2)
+data<-data[,-10]
+#=================================================================Sim with signal
+
+set.seed(3456)
+surv_signal<-c(beta1*hist +beta2*ca_comp +beta3*procedure+beta4*hosp + beta5*rad+
+                 beta6*lang +beta7*race+beta8*status+0.2*rnorm(6800,20,3)
+                )
+
+
+summary(surv_signal)
+surv_signal2<-ifelse(surv_signal<2.62, 1, 0)
+table(surv_signal2)
+#==============================================================N=10215============================================================
+rm(list=ls())
+?sample
+#rnorm(n, mean = 0, sd = 1)
+str(MRC)
+summary(MRC$record_id)
+
+NumSubj <- 10200
+ID<-sample(10200?, 10200, replace=F)
+
+#histology
+table(MRC$histology___1)
+hist <- sample(c(0,1), 10200, replace = TRUE, prob = c(0.3867647059, 0.6132352941))
+beta1 <-  1.27191265
+
+table(MRC$ca_complications___1)
+ca_comp <- sample(c(0,1),size=10200, replace=TRUE, prob=c(0.5514705882,0.4485294118))
+beta2 <-  0.29030023
+
+
+table(MRC$procedure1to17)
+# >1   0   1 
+#28 279 373  
+procedure <-sample(c(0, 1), size =10200, replace=TRUE, prob=c(0.41029411765, 0.5897058824))
+beta3 <- -0.35648273
+
+#hospital
+table(MRC$hospital)
+hosp <- sample(c(1,2,3), 10200, replace = TRUE, prob = c(0.3573529412,0.2470588235,0.3955882353))
+beta4 <-c(-1.12064784,-1.33478904)
+#radiology
+table(MRC$radiologic_stage2)  
+rad <- sample(c(0,1,2,3), 10200, replace = TRUE, prob = c(0.2279411765, 0.1147058824, 0.3455882353, 0.3117647059))
+beta5 <-c(-0.50119664,0.05613542,-0.69414907)
+
+
+table(MRC$language2)
+lang <- sample(c(1,2,3), 10200, replace = TRUE, prob = c(0.35,0.4647058824,0.185291176))
+beta6 <-c(-0.42348179,-0.49313648)
+
+table(MRC$race)
+race <- sample(c(1,2,3), 10200, replace = TRUE, prob = c(0.3602941176, 0.5029411765,0.1367647059 ))
+beta7 <-c(-0.02694048,0.04633203)
+
+table(MRC$status2)
+status <- sample(c(0,1),size=10200, replace=TRUE, prob=c(0.6352941176,0.3647058824))
+beta8 <-  -0.82159783
+
+
+#============================================================Sim without
+#outcome
+table(MRC$death2)
+surv_nosignal <- sample(c(0,1),size=10200, replace=TRUE, prob=c(0.4132352941,0.5867647059))
+
+simRandom<- cbind(ID,hist,ca_comp,procedure,rad,hosp,lang,race,status,surv_nosignal)
+
+#summary statistics
+simRandom2 <- data.frame(simRandom)
+
+table(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-as.factor(simRandom2$surv_nosignal)
+simRandom2$surv_nosignal <-ifelse(simRandom2$surv_nosignal=="0", "notsurvived", "survived")
+
+str(simRandom2)
+y2 <-simRandom2$death2
+
+data <-simRandom2
+data$surv_signal2 <-data$surv_nosignal
+data$surv_signal2 <-as.factor(data$surv_signal2)
+data<-data[,-10]
+#===================================================Sim with signal
+#sim with signal
+#Case_signal<-c(0.3*T1+0.2*N_Biop+0.1*N_Rels+0.1*AgeMen+0.3*rnorm(20,3))
+set.seed(3456)
+surv_signal<-c(beta1*hist +beta2*ca_comp +beta3*procedure+beta4*hosp + beta5*rad+
+                 beta6*lang +beta7*race+beta8*status+0.2*rnorm(10200,20,3)
+)
+
+
+summary(surv_signal)
+surv_signal2<-ifelse(surv_signal<0.863, 1, 0)
+table(surv_signal2)
+
+
+

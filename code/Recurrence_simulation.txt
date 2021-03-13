@@ -1,0 +1,415 @@
+#Run 10000 bootstrap using logistic reg to estimates coefficients for data simulation
+
+X <-MRC[1:697,c("radiologic_stage2", "chemo_drug","procedure1to17", "pt_prev_ca",
+                 "prev_ca_rx___1","prior_c_scope2","hospital2","rx_mdt1___1","status2")]
+
+
+X$radiologic_stage2 <-as.factor(X$radiologic_stage2)
+X$chemo_drug <-as.factor(X$chemo_drug)
+X$rx_mdt1___1 <-as.factor(X$rx_mdt1___1)
+X$procedure1to17 <-as.factor(X$procedure1to17)
+X$pt_prev_ca <-as.factor(X$pt_prev_ca)
+X$prev_ca_rx___1 <-as.factor(X$prev_ca_rx___1)
+X$prior_c_scope2 <-as.factor(X$prior_c_scope2)
+
+
+library(doSNOW)
+library(DMwR)
+library(klaR)
+
+cl <- makeCluster(6, type = "SOCK")
+registerDoSNOW(cl)
+set.seed(3456)
+
+logit = glm(status2 ~ radiologic_stage2+ chemo_drug+procedure1to17+ rx_mdt1___1+pt_prev_ca+
+            +prev_ca_rx___1+prior_c_scope2+hospital2, data =X, family = binomial(link = "logit"))
+
+
+R = 10000                      # number of bootstrap samples
+n = nrow(X)              # sample size
+k = length(coef(logit))     # number of coefficients
+
+# set up a empty Rxn matrix B
+B = matrix(nrow = R, ncol = k,
+           dimnames = list(paste("Sample",1:R), 
+                           names(coef(logit))))
+# loop R times
+set.seed(34561)
+for(i in 1:R){
+  # sample credit data with replacement
+  boot.data = X[sample(x = 1:n, size = n, replace = TRUE), ]
+  # fit the model on the boostrapped sample
+  boot.logit = glm(logit$formula, 
+                   data=boot.data, family = binomial(link = "logit"))
+  # store the coefficients
+  B[i,] = coef(boot.logit)
+}
+
+
+#shutdown cluster
+stopCluster(cl)
+mean(B)
+
+print(boot.logit$coefficients)
+v(boo)
+coef
+
+#==========================Use the Coefficients from the model to simulate artificial data
+
+rm(list=ls())
+N <- 697
+ID<-sample(697,697, replace=F)
+
+
+table(MRC$chemo_drug)
+#NO Yes 
+#451 246 
+chemo <-sample(c(0, 1), size =697, replace=TRUE, prob=c(0.64705882353,0.35294117647))
+beta1 = -1.49311473 
+
+table(MRC$procedure1to17)
+#  0   1 
+#287 410 
+procedure <-sample(c(0, 1), size =697, replace=TRUE, prob=c(0.4117647059, 0.588235941))
+beta2 <- 0.30515522 
+
+table(MRC$pt_prev_ca)
+#0   1 
+#585 112 
+pt_pre <-sample(c(0,1), size =697, replace=TRUE, prob=c(0.83931133429,0.16068866571))
+beta3 <- -0.22314501
+
+table(MRC$prior_c_scope2)
+#1   2 
+#451 246
+prior <-sample(c(0,1), size =697, replace =TRUE, prob =c(0.647058823,0.35294117647))
+beta4 <--0.93131317
+
+table(MRC$prev_ca_rx___1)
+#0   1 
+#629  68
+prev <-sample(c(0,1), size =697, replace=TRUE, prob=c(0.90243902439,0.09756097561))
+beta5 <--1.8198414
+
+table(MRC$radiologic_stage2)
+#/0   1   2   3   4 
+#80  37 120 240 220
+rad <- sample(c(0,1,2,3), size =697, replace = TRUE, prob = c(0.11477761834,0.225251076,0.3443328551, 0.3156384505))
+beta6 <- c(-0.35781,0.23695,-2.23121)
+
+#rad1 <- sample(c(0,1), size =697, replace = TRUE, prob = c(0.11477761834,0.225251076))
+#rad2 <- sample(c(0,2), size =697, replace = TRUE, prob = c(0.11477761834,0.3443328551))
+#rad3 <- sample(c(0,2), size =697, replace = TRUE, prob = c(0.11477761834,0.3156384505))
+
+#beta6a <--0.35781
+#beta6b <-0.23695
+#beta6c <--2.23121
+
+
+table(MRC$hospital2) 
+hosp <-sample(c(0,1,2), size =697, replace=TRUE, prob=c(0.355810617,0.251076040, 0.393113343))
+beta7 <-c(-0.09181,0.79414)
+#beta7 <-c(-0.09181,0.79414)
+
+table(MRC$rx_mdt1___1)
+rx <-sample(c(0,1), size =697, replace=TRUE, prob=c(0.692969870,0.307030129))
+beta8 <--0.64947
+
+
+#age
+#table(MRC$age_at_first_vst)
+#sd(MRC$age_at_first_vst)
+Age<- as.integer(rnorm(N, 57,13.32468))
+beta9 <- -0.01943838
+#a <-c(1,2,3,4)*beta7
+#dat <-data.frame(a)
+#status
+
+table(MRC$status2)
+
+
+#==========================================================#linear combination of data
+set.seed(3456)
+sim_signal<-c(beta1*chemo+ beta2*procedure+beta3*pt_pre+beta4*prior+
+                beta5*prev+ beta6a*rad+beta7*hosp+beta8*rx+beta9*Age+0.1*rnorm(697,60,0.2))
+
+#)
+hist(sim_signal)
+summary(sim_signal)
+signal697<-ifelse(sim_signal>3.25, 1, 0)
+table(signal697)
+
+
+#=========================================================================Combine simulated data
+data<- cbind(ID,chemo,procedure,pt_pre,prior,rad,prev,hosp,rx,Age,signal697)
+data <- data.frame(data)
+str(data)
+data$signal697 <-as.factor(data$signal697)
+table(data$signal697)
+data$signal697 <-ifelse(data$signal697== "0", "survived", "not_survived") 
+data$signal697 <-as.factor(data$signal697)
+data$signal697 <- relevel(data$signal697, ref = "survived")
+#put other features as factors
+data$rad <-as.factor(data$rad)
+data$chemo <-as.factor(data$chemo)
+data$pt_pre <-as.factor(data$pt_pre)
+data$prior <-as.factor(data$prior)
+data$hosp <-as.factor(data$hosp)
+data$procedure <-as.factor(data$procedure)
+data$prev <-as.factor(data$prev)
+data$rx <-as.factor(data$rx)
+
+
+
+write.csv(data,file="Simdata_recur6970.csv")
+
+#============================================================3485==============================================================
+rm(list=ls())
+N <- 3485
+ID<-sample(3485,3485, replace=F)
+
+
+table(MRC$chemo_drug)
+#NO Yes 
+#451 246 
+chemo <-sample(c(0, 1), size =3485, replace=TRUE, prob=c(0.64705882353,0.35294117647))
+beta1 = -1.49311473 
+
+table(MRC$procedure1to17)
+#  0   1 
+#287 410 
+procedure <-sample(c(0, 1), size =3485, replace=TRUE, prob=c(0.4117647059, 0.588235941))
+beta2 <- 0.30515522 
+
+table(MRC$pt_prev_ca)
+#0   1 
+#585 112 
+pt_pre <-sample(c(0,1), size =3485, replace=TRUE, prob=c(0.83931133429,0.16068866571))
+beta3 <- -0.22314501
+
+table(MRC$prior_c_scope2)
+#1   2 
+#451 246
+prior <-sample(c(0,1), size =3485, replace =TRUE, prob =c(0.647058823,0.35294117647))
+beta4 <--0.93131317
+
+table(MRC$prev_ca_rx___1)
+#0   1 
+#629  68
+prev <-sample(c(0,1), size =3485, replace=TRUE, prob=c(0.90243902439,0.09756097561))
+beta5 <--1.8198414
+
+table(MRC$radiologic_stage2)
+#/0   1   2   3   4 
+#80  37 120 240 220
+rad <- sample(c(0,1,2,3), size =3485, replace = TRUE, prob = c(0.11477761834,0.225251076,0.3443328551, 0.3156384505))
+beta6 <- c(-0.35781,0.23695,-2.23121)
+
+rad1 <- sample(c(0,1), size =3485, replace = TRUE, prob = c(0.11477761834,0.225251076))
+rad2 <- sample(c(0,2), size =3485, replace = TRUE, prob = c(0.11477761834,0.3443328551))
+rad3 <- sample(c(0,2), size =3485, replace = TRUE, prob = c(0.11477761834,0.3156384505))
+
+beta6a <--0.35781
+beta6b <-0.23695
+beta6c <--2.23121
+
+
+table(MRC$hospital2)
+hosp <-sample(c(0,1,2), size =3485, replace=TRUE, prob=c(0.355810617,0.251076040, 0.393113343))
+beta7 <-c(-0.09181,0.79414)
+#beta7 <-c(-0.09181,0.79414)
+
+table(MRC$rx_mdt1___1)
+rx <-sample(c(0,1), size =3485, replace=TRUE, prob=c(0.692969870,0.307030129))
+beta8 <--0.64947
+
+
+#age
+table(MRC$age_at_first_vst)
+sd(MRC$age_at_first_vst)
+Age<- as.integer(rnorm(N, 57,13.32468))
+beta9 <- -0.01943838
+#===============================================linear combination
+
+set.seed(3456)
+sim_signal<-c(beta1*chemo+ beta2*procedure+beta3*pt_pre+beta4*prior+
+                beta5*prev+ beta6a*rad+beta7*hosp+beta8*rx+beta9*Age+0.1*rnorm(3485,60,0.2))
+
+
+hist(sim_signal)
+summary(sim_signal)
+signal3485<-ifelse(sim_signal>3.948, 1, 0)
+table(signal3485)
+
+signal697 <-signal3485 
+
+#===========use combine data codes above
+
+#==========================================================6970=====================================
+rm(list=ls())
+
+
+N <- 6970
+ID<-sample(6970,6970, replace=F)
+
+
+table(MRC$chemo_drug)
+#NO Yes 
+#451 246 
+chemo <-sample(c(0, 1), size =6970, replace=TRUE, prob=c(0.64705882353,0.35294117647))
+beta1 = -1.49311473 
+
+table(MRC$procedure1to17)
+#  0   1 
+#287 410 
+procedure <-sample(c(0, 1), size =6970, replace=TRUE, prob=c(0.4117647059, 0.588235941))
+beta2 <- 0.30515522 
+
+table(MRC$pt_prev_ca)
+#0   1 
+#585 112 
+pt_pre <-sample(c(0,1), size =6970, replace=TRUE, prob=c(0.83931133429,0.16068866571))
+beta3 <- -0.22314501
+
+table(MRC$prior_c_scope2)
+#1   2 
+#451 246
+prior <-sample(c(0,1), size =6970, replace =TRUE, prob =c(0.647058823,0.35294117647))
+beta4 <--0.93131317
+
+table(MRC$prev_ca_rx___1)
+#0   1 
+#629  68
+prev <-sample(c(0,1), size =6970, replace=TRUE, prob=c(0.90243902439,0.09756097561))
+beta5 <--1.8198414
+
+table(MRC$radiologic_stage2)
+#/0   1   2   3   4 
+#80  37 120 240 220
+rad <- sample(c(0,1,2,3), size =6970, replace = TRUE, prob = c(0.11477761834,0.225251076,0.3443328551, 0.3156384505))
+beta6 <- c(-0.35781,0.23695,-2.23121)
+
+rad1 <- sample(c(0,1), size =6970, replace = TRUE, prob = c(0.11477761834,0.225251076))
+rad2 <- sample(c(0,2), size =6970, replace = TRUE, prob = c(0.11477761834,0.3443328551))
+rad3 <- sample(c(0,2), size =6970, replace = TRUE, prob = c(0.11477761834,0.3156384505))
+
+beta6a <--0.35781
+beta6b <-0.23695
+beta6c <--2.23121
+
+
+table(MRC$hospital2)
+hosp <-sample(c(0,1,2), size =6970, replace=TRUE, prob=c(0.355810617,0.251076040, 0.393113343))
+beta7 <-c(-0.09181,0.79414)
+#beta7 <-c(-0.09181,0.79414)
+
+table(MRC$rx_mdt1___1)
+rx <-sample(c(0,1), size =6970, replace=TRUE, prob=c(0.692969870,0.307030129))
+beta8 <--0.64947
+
+
+#age
+table(MRC$age_at_first_vst)
+sd(MRC$age_at_first_vst)
+Age<- as.integer(rnorm(N, 57,13.32468))
+beta9 <- -0.01943838
+
+
+table(MRC$status2)
+
+#=============================================================================================================
+set.seed(3456)
+sim_signal<-c(beta1*chemo+ beta2*procedure+beta3*pt_pre+beta4*prior+
+                beta5*prev+ beta6a*rad+beta7*hosp+beta8*rx+0.1*rnorm(6970,60,0.2))
+              
+               
+hist(sim_signal)
+summary(sim_signal)
+signal697<-ifelse(sim_signal>4.255, 1, 0)
+table(signal697)
+
+#===============================================================10455====================================================================
+
+rm(list=ls())
+N <- 10455
+ID<-sample(10455,10455,replace=F)
+
+
+table(MRC$chemo_drug)
+#NO Yes 
+#451 246 
+chemo <-sample(c(0, 1), size =10455,replace=TRUE, prob=c(0.64705882353,0.35294117647))
+beta1 = -1.49311473 
+
+table(MRC$procedure1to17)
+#  0   1 
+#287 410 
+procedure <-sample(c(0, 1), size =10455,replace=TRUE, prob=c(0.4117647059, 0.588235941))
+beta2 <- 0.30515522 
+
+table(MRC$pt_prev_ca)
+#0   1 
+#585 112 
+pt_pre <-sample(c(0,1), size =10455,replace=TRUE, prob=c(0.83931133429,0.16068866571))
+beta3 <- -0.22314501
+
+table(MRC$prior_c_scope2)
+#1   2 
+#451 246
+prior <-sample(c(0,1), size =10455, replace =TRUE, prob =c(0.647058823,0.35294117647))
+beta4 <--0.93131317
+
+table(MRC$prev_ca_rx___1)
+#0   1 
+#629  68
+prev <-sample(c(0,1), size =10455,replace=TRUE, prob=c(0.90243902439,0.09756097561))
+beta5 <--1.8198414
+
+table(MRC$radiologic_stage2)
+#/0   1   2   3   4 
+#80  37 120 240 220
+rad <- sample(c(0,1,2,3), size =10455,replace = TRUE, prob = c(0.11477761834,0.225251076,0.3443328551, 0.3156384505))
+beta6 <- c(-0.35781,0.23695,-2.23121)
+
+rad1 <- sample(c(0,1), size =10455,replace = TRUE, prob = c(0.11477761834,0.225251076))
+rad2 <- sample(c(0,2), size =10455,replace= TRUE, prob = c(0.11477761834,0.3443328551))
+rad3 <- sample(c(0,2), size =10455,replace = TRUE, prob = c(0.11477761834,0.3156384505))
+
+beta6a <--0.35781
+beta6b <-0.23695
+beta6c <--2.23121
+
+
+table(MRC$hospital2)
+#div/sep  mar/co  single widowed 
+#81     434     101      81 
+hosp <-sample(c(0,1,2), size =10455,replace=TRUE, prob=c(0.355810617,0.251076040, 0.393113343))
+beta7 <-c(-0.09181,0.79414)
+#beta7 <-c(-0.09181,0.79414)
+
+table(MRC$rx_mdt1___1)
+rx <-sample(c(0,1), size =10455,replace=TRUE, prob=c(0.692969870,0.307030129))
+beta8 <--0.64947
+
+
+#age
+table(MRC$age_at_first_vst)
+sd(MRC$age_at_first_vst)
+Age<- as.integer(rnorm(N, 57,13.32468))
+beta9 <- -0.01943838
+
+
+table(MRC$status2)
+
+set.seed(3456)
+sim_signal<-c(beta1*chemo+ beta2*procedure+beta3*pt_pre+beta4*prior+
+                beta5*prev+ beta6a*rad+beta7*hosp+beta8*rx+0.1*rnorm(10455,60,0.2))
+
+
+
+hist(sim_signal)
+summary(sim_signal)
+signal697 <- ifelse(sim_signal>4.2324, 1, 0)
+table(signal697)
+
+#Use data combination above
